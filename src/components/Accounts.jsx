@@ -7,6 +7,7 @@ import { sortServicesByRarity } from '../utils/sortServices';
 
 export default function Accounts() {
   const sortedServices = services.map(category => sortServicesByRarity(category));
+  const totalServices = services.reduce((total, category) => total + category.items.length, 0);
 
   return (
     <motion.div
@@ -21,9 +22,19 @@ export default function Accounts() {
           className="text-center mb-16"
         >
           <h1 className="text-5xl font-bold text-red-500 mb-6">Available Services</h1>
-          <p className="text-xl text-gray-400 max-w-2xl mx-auto">
+          <p className="text-xl text-gray-400 max-w-2xl mx-auto mb-4">
             Browse our collection of premium accounts and services
           </p>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2 }}
+            className="inline-block px-6 py-2 bg-red-500/10 border border-red-500/30 rounded-lg"
+          >
+            <span className="text-white font-bold">
+              {totalServices} Total Services Available
+            </span>
+          </motion.div>
         </motion.div>
 
         <motion.div

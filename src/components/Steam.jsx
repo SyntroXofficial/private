@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import SearchBar from './SearchBar';
+import SearchBar from './layout/SearchBar';
 import WarningMessage from './WarningMessage';
 import SteamHeader from './steam/SteamHeader';
 import SteamAccountsList from './steam/SteamAccountsList';
@@ -27,9 +27,8 @@ export default function Steam() {
       className="min-h-screen"
     >
       <SteamHeader />
-
       <div className="max-w-7xl mx-auto px-6 pb-16">
-        <SearchBar onSearch={handleSearch} />
+        <SearchBar onSearch={handleSearch} placeholder="Search games..." />
         <WarningMessage />
         <SteamAccountsList accounts={filteredAccounts} />
       </div>

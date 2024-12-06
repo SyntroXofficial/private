@@ -21,6 +21,26 @@ export default function HeroContent() {
             Experience gaming excellence with premium accounts, cloud gaming, and exclusive content.
             Join our community of passionate gamers today.
           </motion.p>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="mt-4 flex flex-col items-center gap-2"
+          >
+            <p className="text-gray-400">
+              Created with ❤️ by{' '}
+              <span className="text-red-500 font-semibold hover:text-red-400 transition-colors cursor-pointer">
+                Andres_rios
+              </span>
+              {' '}and{' '}
+              <span className="text-red-500 font-semibold hover:text-red-400 transition-colors cursor-pointer">
+                MarcSpector
+              </span>
+            </p>
+            <p className="text-sm text-gray-500">
+              Premium Gaming Services Since 2023
+            </p>
+          </motion.div>
         </motion.div>
       </div>
     </div>

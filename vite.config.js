@@ -1,12 +1,11 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import { splitVendorChunkPlugin } from 'vite';
 import compression from 'vite-plugin-compression';
+import { ViteImageOptimizer } from 'vite-plugin-image-optimizer';
 
 export default defineConfig({
   plugins: [
     react(),
-    splitVendorChunkPlugin(),
     compression({
       algorithm: 'gzip',
       ext: '.gz'
@@ -14,6 +13,17 @@ export default defineConfig({
     compression({
       algorithm: 'brotliCompress',
       ext: '.br'
+    }),
+    ViteImageOptimizer({
+      jpg: {
+        quality: 80
+      },
+      png: {
+        quality: 80
+      },
+      webp: {
+        lossless: true
+      }
     })
   ],
   build: {
@@ -22,7 +32,7 @@ export default defineConfig({
         manualChunks: {
           'react-vendor': ['react', 'react-dom', 'react-router-dom'],
           'animation-vendor': ['framer-motion'],
-          'ui-vendor': ['@heroicons/react']
+          'ui-vendor': ['@heroicons/react'],
         }
       }
     },
@@ -34,11 +44,23 @@ export default defineConfig({
         drop_console: true,
         drop_debugger: true
       }
-    }
+    },
+    assetsInlineLimit: 4096,
+    cssCodeSplit: true,
+    modulePreload: true,
+    reportCompressedSize: false
   },
   server: {
+    port: 3000,
+    host: true,
+    strictPort: true,
     headers: {
       'Cache-Control': 'public, max-age=31536000'
     }
+  },
+  preview: {
+    port: 4173,
+    host: true,
+    strictPort: true
   }
 })
