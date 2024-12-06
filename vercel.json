@@ -1,40 +1,7 @@
 {
-  "version": 2,
-  "builds": [
-    {
-      "src": "index.html",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "api/hello.js",
-      "use": "@vercel/node"
-    }
-  ],
-  "routes": [
-    {
-      "src": "^http://(.*)$",
-      "status": 301,
-      "headers": {
-        "Location": "https://$1"
-      }
-    },
-    {
-      "src": "/api/(.*)",
-      "dest": "/api/hello.js"
-    },
-    {
-      "src": "/(.*)",
-      "headers": {
-        "Cache-Control": "public, max-age=31536000, immutable"
-      }
-    }
-  ],
-  "env": {
-    "API_KEY": "@api-key-secret"
-  },
-  "alias": [
-    "https://primenexo.vercel.app/",
-    "https://primenexo.vercel.app/"
-  ],
-  "regions": ["sfo1", "cdg1"]
+  "src": "/images/(.*)",
+  "dest": "/images/$1",
+  "headers": {
+    "Cache-Control": "public, max-age=31536000, immutable"
+  }
 }
