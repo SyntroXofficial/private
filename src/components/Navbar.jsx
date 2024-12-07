@@ -1,12 +1,20 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 export default function Navbar() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { isAuthenticated, logout } = useAuth();
 
   const isActive = (path) => {
     return location.pathname === path ? 'bg-red-900/20 text-red-400' : '';
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
   };
 
   return (
@@ -21,13 +29,17 @@ export default function Navbar() {
         </Link>
         <div className="flex gap-6">
           <Link to="/" className={`nav-link ${isActive('/')}`}>Home</Link>
-          <Link to="/steam" className={`nav-link ${isActive('/steam')}`}>Steam</Link>
-          <Link to="/accounts" className={`nav-link ${isActive('/accounts')}`}>Accounts</Link>
-          <Link to="/methods" className={`nav-link ${isActive('/methods')}`}>Methods</Link>
-          <Link to="/other-services" className={`nav-link ${isActive('/other-services')}`}>Other Services</Link>
-          <Link to="/members" className={`nav-link ${isActive('/members')}`}>Members</Link>
-          <Link to="/feedback" className={`nav-link ${isActive('/feedback')}`}>Feedback</Link>
-          <Link to="/auth" className={`nav-link ${isActive('/auth')}`}>Login</Link>
+          {isAuthenticated ? (
+            <>
+              <Link to="/steam" className={`nav-link ${isActive('/steam')}`}>Steam</Link>
+              <Link to="/accounts" className={`nav-link ${isActive('/accounts')}`}>Accounts</Link>
+              <Link to="/methods" className={`nav-link ${isActive('/methods')}`}>Methods</Link>
+              <Link to="/other-services" className={`nav-link ${isActive('/other-services')}`}>Other Services</Link>
+              <button onClick={handleLogout} className="nav-link">Logout</button>
+            </>
+          ) : (
+            <Link to="/auth" className={`nav-link ${isActive('/auth')}`}>Login</Link>
+          )}
         </div>
       </div>
     </motion.nav>

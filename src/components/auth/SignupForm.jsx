@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
+import { useAuth } from '../../context/AuthContext';
 import { validateEmail } from '../../utils/validation';
 import { EnvelopeIcon, LockClosedIcon, UserIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 
 export default function SignupForm() {
+  const { signup } = useAuth();
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -15,6 +17,11 @@ export default function SignupForm() {
   const handleSubmit = (e) => {
     e.preventDefault();
     
+    if (!formData.username) {
+      setError('Username is required');
+      return;
+    }
+
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match');
       return;
@@ -26,8 +33,10 @@ export default function SignupForm() {
       return;
     }
 
-    // Here you would typically handle the signup logic
-    console.log('Signup attempt:', formData);
+    const result = signup(formData);
+    if (!result.success) {
+      setError(result.error || 'Signup failed');
+    }
   };
 
   const handleChange = (e) => {

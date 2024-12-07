@@ -1,24 +1,39 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { CloudArrowUpIcon, FilmIcon } from '@heroicons/react/24/outline';
+import { CloudArrowUpIcon, FilmIcon, UserGroupIcon, ChatBubbleBottomCenterTextIcon } from '@heroicons/react/24/outline';
+
+const services = [
+  {
+    icon: CloudArrowUpIcon,
+    title: 'GeForce NOW',
+    description: 'Cloud gaming platform powered by NVIDIA. Play your favorite games on any device.',
+    path: '/geforce-now'
+  },
+  {
+    icon: FilmIcon,
+    title: 'Stremio',
+    description: 'Stream movies, TV shows, and more with our enhanced Stremio service.',
+    path: '/stremio'
+  },
+  {
+    icon: UserGroupIcon,
+    title: 'Members',
+    description: 'View our team members. Currently 2 active members.',
+    path: '/members',
+    stats: '2 Members',
+    members: ['Andres_rios', 'MarcSpector']
+  },
+  {
+    icon: ChatBubbleBottomCenterTextIcon,
+    title: 'Feedback',
+    description: 'Check community feedback and suggestions.',
+    path: '/feedback',
+    stats: '0 Feedbacks'
+  }
+];
 
 export default function OtherServices() {
-  const services = [
-    {
-      icon: CloudArrowUpIcon,
-      title: 'GeForce NOW',
-      description: 'Cloud gaming platform powered by NVIDIA. Play your favorite games on any device.',
-      path: '/geforce-now'
-    },
-    {
-      icon: FilmIcon,
-      title: 'Stremio',
-      description: 'Stream movies, TV shows, and more with our enhanced Stremio service.',
-      path: '/stremio'
-    }
-  ];
-
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -46,11 +61,7 @@ export default function OtherServices() {
               transition={{ delay: index * 0.1 }}
             >
               <Link to={service.path}>
-                <div className="glass-effect cyber-border p-8 rounded-xl h-full hover:scale-[1.02] transition-transform duration-300">
-                  <service.icon className="h-16 w-16 text-red-500 mb-6" />
-                  <h2 className="text-2xl font-bold text-red-400 mb-4">{service.title}</h2>
-                  <p className="text-gray-400">{service.description}</p>
-                </div>
+                <ServiceCard service={service} />
               </Link>
             </motion.div>
           ))}
@@ -59,3 +70,26 @@ export default function OtherServices() {
     </motion.div>
   );
 }
+
+const ServiceCard = ({ service }) => (
+  <div className="glass-effect cyber-border p-8 rounded-xl h-full hover:scale-[1.02] transition-transform duration-300">
+    <service.icon className="h-16 w-16 text-red-500 mb-6" />
+    <h2 className="text-2xl font-bold text-red-400 mb-4">{service.title}</h2>
+    <p className="text-gray-400 mb-4">{service.description}</p>
+    {service.stats && (
+      <div className="mt-4 px-3 py-1.5 bg-red-500/20 text-red-400 rounded-full inline-block">
+        {service.stats}
+      </div>
+    )}
+    {service.members && (
+      <div className="mt-4 space-y-2">
+        {service.members.map((member, idx) => (
+          <div key={idx} className="text-gray-300 flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-red-500"></span>
+            {member}
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+);

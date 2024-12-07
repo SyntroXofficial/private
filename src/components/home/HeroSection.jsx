@@ -4,6 +4,7 @@ import HeroTitle from './HeroTitle';
 import HeroBackground from './HeroBackground';
 import LatestReleases from './LatestReleases';
 import Features from './Features';
+import WarningMessage from './WarningMessage';
 
 export default function HeroSection() {
   return (
@@ -26,6 +27,7 @@ export default function HeroSection() {
           </div>
         </div>
       </div>
+      <WarningMessage />
       <LatestReleases />
       <Features />
     </>

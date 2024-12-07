@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ExclamationTriangleIcon, LightBulbIcon, ChatBubbleLeftIcon } from '@heroicons/react/24/outline';
+import { useAuth } from '../../context/AuthContext';
 
 const FEEDBACK_TYPES = [
   { id: 'issue', label: 'Report Issue', icon: ExclamationTriangleIcon, color: 'text-yellow-500' },
@@ -13,11 +14,7 @@ export default function FeedbackForm() {
   const [accountName, setAccountName] = useState('');
   const [message, setMessage] = useState('');
   const [submitted, setSubmitted] = useState(false);
-
-  // Simulated current user - in a real app, this would come from your auth context
-  const currentUser = {
-    username: 'GameMaster64'
-  };
+  const { user } = useAuth();
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -26,7 +23,7 @@ export default function FeedbackForm() {
       type: feedbackType, 
       accountName, 
       message,
-      username: currentUser.username 
+      username: user?.username || 'Anonymous'
     });
     setSubmitted(true);
     
@@ -48,7 +45,7 @@ export default function FeedbackForm() {
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="flex items-center gap-3 mb-6">
           <div className="px-3 py-1 rounded-full bg-red-500/20 text-red-400 border border-red-500/30">
-            {currentUser.username}
+            {user?.username || 'Anonymous'}
           </div>
         </div>
 

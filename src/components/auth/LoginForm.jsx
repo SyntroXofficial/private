@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
+import { useAuth } from '../../context/AuthContext';
 import { validateEmail } from '../../utils/validation';
 import { EnvelopeIcon, LockClosedIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 
 export default function LoginForm() {
+  const { login } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -19,8 +21,15 @@ export default function LoginForm() {
       return;
     }
 
-    // Here you would typically handle the login logic
-    console.log('Login attempt:', formData);
+    if (!formData.password) {
+      setError('Password is required');
+      return;
+    }
+
+    const result = login(formData);
+    if (!result.success) {
+      setError(result.error || 'Login failed');
+    }
   };
 
   const handleChange = (e) => {

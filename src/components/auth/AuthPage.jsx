@@ -1,10 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useLocation } from 'react-router-dom';
 import LoginForm from './LoginForm';
 import SignupForm from './SignupForm';
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
+  const location = useLocation();
+
+  useEffect(() => {
+    // Check if there's a signup parameter in the URL
+    const params = new URLSearchParams(location.search);
+    if (params.get('mode') === 'signup') {
+      setIsLogin(false);
+    }
+  }, [location]);
 
   return (
     <div className="min-h-screen pt-24 pb-12 px-6">
