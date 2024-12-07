@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ExclamationTriangleIcon, LightBulbIcon, ChatBubbleLeftIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../../context/AuthContext';
+import { useFeedbackStore } from '../../hooks/useFeedbackStore';
 
 const FEEDBACK_TYPES = [
   { id: 'issue', label: 'Report Issue', icon: ExclamationTriangleIcon, color: 'text-yellow-500' },
@@ -15,16 +16,23 @@ export default function FeedbackForm() {
   const [message, setMessage] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const { user } = useAuth();
+  const { addFeedback } = useFeedbackStore();
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Here you would typically send the feedback to your backend
-    console.log({ 
-      type: feedbackType, 
-      accountName, 
-      message,
+    
+    if (!feedbackType || !message) {
+      return;
+    }
+
+    const newFeedback = {
+      type: feedbackType,
+      accountName: accountName.trim(),
+      message: message.trim(),
       username: user?.username || 'Anonymous'
-    });
+    };
+
+    addFeedback(newFeedback);
     setSubmitted(true);
     
     // Reset form after submission
@@ -101,7 +109,8 @@ export default function FeedbackForm() {
           type="submit"
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          className="w-full py-3 bg-red-600 hover:bg-red-700 rounded-lg text-white transition-all duration-300"
+          disabled={!feedbackType || !message}
+          className="w-full py-3 bg-red-600 hover:bg-red-700 rounded-lg text-white transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Submit Feedback
         </motion.button>
