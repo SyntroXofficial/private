@@ -8,21 +8,29 @@ export default defineConfig({
     react(),
     compression({
       algorithm: 'gzip',
-      ext: '.gz'
+      ext: '.gz',
+      threshold: 10240
     }),
     compression({
       algorithm: 'brotliCompress',
-      ext: '.br'
+      ext: '.br',
+      threshold: 10240
     }),
     ViteImageOptimizer({
       jpg: {
-        quality: 80
+        quality: 80,
+        progressive: true
       },
       png: {
-        quality: 80
+        quality: 80,
+        progressive: true
       },
       webp: {
-        lossless: true
+        lossless: true,
+        quality: 85
+      },
+      avif: {
+        quality: 80
       }
     })
   ],
@@ -37,18 +45,23 @@ export default defineConfig({
       }
     },
     chunkSizeWarningLimit: 1000,
-    sourcemap: false,
+    sourcemap: process.env.NODE_ENV === 'development',
     minify: 'terser',
     terserOptions: {
       compress: {
         drop_console: true,
-        drop_debugger: true
+        drop_debugger: true,
+        pure_funcs: ['console.log', 'console.info', 'console.debug', 'console.warn']
       }
     },
     assetsInlineLimit: 4096,
     cssCodeSplit: true,
     modulePreload: true,
-    reportCompressedSize: false
+    reportCompressedSize: false,
+    target: 'esnext',
+    outDir: 'dist',
+    emptyOutDir: true,
+    manifest: true
   },
   server: {
     port: 3000,
@@ -62,5 +75,9 @@ export default defineConfig({
     port: 4173,
     host: true,
     strictPort: true
+  },
+  optimizeDeps: {
+    include: ['react', 'react-dom', 'react-router-dom', 'framer-motion', '@heroicons/react'],
+    exclude: ['@vercel/analytics']
   }
-})
+});

@@ -1,4 +1,115 @@
 export const steamAccounts = [
+  // New Accounts (Added at the beginning to show in Latest Releases)
+  {
+    game: 'God Of War Ragnarok',
+    username: 'krishurt9p',
+    password: 'sqVk3Ghpmk1988',
+    imageUrl: 'https://i0.wp.com/www.consolecreatures.com/wp-content/uploads/2022/11/reviewgodofwar.webp',
+    description: '• Full Game Access\n• All Weapons & Armor\n• All Realms Unlocked\n• Special Abilities\n• Bonus Content\n• New Game+ Mode',
+    features: [
+      { label: 'Region', value: 'Global' },
+      { label: 'Platform', value: 'Steam' },
+      { label: 'Rating', value: 'M (Mature)' },
+      { label: 'Genre', value: 'Action Adventure' },
+      { label: 'Release', value: '2024' },
+      { label: 'Playtime', value: '40+ hours' }
+    ],
+    requirements: {
+      cpu: 'AMD Ryzen 5 3600 or Intel Core i5-10400',
+      gpu: 'AMD RX 6600 XT or NVIDIA RTX 3060',
+      ram: '16 GB',
+      storage: '119 GB SSD'
+    },
+    rarity: 'legendary'
+  },
+  {
+    game: 'Street Fighter 6',
+    username: '1578252610',
+    password: 'A220387723',
+    imageUrl: 'https://cdn.cloudflare.steamstatic.com/steam/apps/1364780/header.jpg',
+    description: '• Full Game Access\n• All Characters Unlocked\n• All Game Modes\n• Online Features\n• Fighting Ground\n• World Tour Mode',
+    features: [
+      { label: 'Region', value: 'Global' },
+      { label: 'Platform', value: 'Steam' },
+      { label: 'Rating', value: 'T (Teen)' },
+      { label: 'Genre', value: 'Fighting' },
+      { label: 'Release', value: '2023' },
+      { label: 'Playtime', value: '50+ hours' }
+    ],
+    requirements: {
+      cpu: 'Intel Core i5-7500 or AMD Ryzen 3 1200',
+      gpu: 'NVIDIA GTX 1060 or AMD RX 580',
+      ram: '8 GB',
+      storage: '60 GB SSD'
+    },
+    rarity: 'epic'
+  },
+  {
+    game: 'Saints Row 2020',
+    username: 'kinga19942',
+    password: 'NSVO91LPr10NKOyYm',
+    imageUrl: 'https://cdn1.epicgames.com/offer/0d23bb77ee2f45b7a571bde68caddb09/EGS_SaintsRow_DeepSilverVolition_S1_2560x1440-1ba560d3f228fe5c7341777a6ac9abb7',
+    description: '• Full Game Access\n• All DLC Content\n• All Weapons\n• Custom Character\n• All Vehicles\n• Special Items',
+    features: [
+      { label: 'Region', value: 'Global' },
+      { label: 'Platform', value: 'Steam' },
+      { label: 'Rating', value: 'M (Mature)' },
+      { label: 'Genre', value: 'Action Adventure' },
+      { label: 'Release', value: '2022' },
+      { label: 'Playtime', value: '40+ hours' }
+    ],
+    requirements: {
+      cpu: 'Intel Core i7-6700K or AMD Ryzen 5 3600',
+      gpu: 'NVIDIA GTX 1070 or AMD RX 5700',
+      ram: '12 GB',
+      storage: '50 GB SSD'
+    },
+    rarity: 'epic'
+  },
+  {
+    game: 'Slime Rancher 2',
+    username: 'youzai5144',
+    password: 'Leyouz5987',
+    imageUrl: 'https://cdn.cloudflare.steamstatic.com/steam/apps/1657630/header.jpg',
+    description: '• Full Game Access\n• All Areas Unlocked\n• All Slimes Available\n• Special Equipment\n• Bonus Content\n• Early Access Updates',
+    features: [
+      { label: 'Region', value: 'Global' },
+      { label: 'Platform', value: 'Steam' },
+      { label: 'Rating', value: 'E (Everyone)' },
+      { label: 'Genre', value: 'Adventure' },
+      { label: 'Release', value: '2022' },
+      { label: 'Playtime', value: '30+ hours' }
+    ],
+    requirements: {
+      cpu: 'Intel Core i5-8400 or AMD Ryzen 5 2600',
+      gpu: 'NVIDIA GTX 1060 or AMD RX 580',
+      ram: '8 GB',
+      storage: '30 GB SSD'
+    },
+    rarity: 'legendary'
+  },
+  {
+    game: 'Gotham Knights',
+    username: 'steamok3090498',
+    password: 'Mjc2MDQ5NTA=',
+    imageUrl: 'https://cdn.cloudflare.steamstatic.com/steam/apps/1496790/header.jpg',
+    description: '• Full Game Access\n• All Characters Unlocked\n• All Costumes\n• Special Abilities\n• Story Mode\n• Co-op Features',
+    features: [
+      { label: 'Region', value: 'Global' },
+      { label: 'Platform', value: 'Steam' },
+      { label: 'Rating', value: 'T (Teen)' },
+      { label: 'Genre', value: 'Action RPG' },
+      { label: 'Release', value: '2022' },
+      { label: 'Playtime', value: '30+ hours' }
+    ],
+    requirements: {
+      cpu: 'Intel Core i5-9600K or AMD Ryzen 5 3600',
+      gpu: 'NVIDIA GTX 1660 Ti or AMD RX 590',
+      ram: '16 GB',
+      storage: '45 GB SSD'
+    },
+    rarity: 'epic'
+  },
   // Mythic Accounts
   {
     game: 'Resident Evil 4 Remake',
@@ -552,7 +663,8 @@ export const steamAccounts = [
       storage: '2 GB'
     },
     rarity: 'rare'
-  }, {
+  },
+  {
     game: 'Stray',
     username: 'Brahminsnare323',
     password: 'xCZStAudn0Cs',

@@ -25,6 +25,9 @@ export default function Navbar() {
           <Link to="/accounts" className={`nav-link ${isActive('/accounts')}`}>Accounts</Link>
           <Link to="/methods" className={`nav-link ${isActive('/methods')}`}>Methods</Link>
           <Link to="/other-services" className={`nav-link ${isActive('/other-services')}`}>Other Services</Link>
+          <Link to="/members" className={`nav-link ${isActive('/members')}`}>Members</Link>
+          <Link to="/feedback" className={`nav-link ${isActive('/feedback')}`}>Feedback</Link>
+          <Link to="/auth" className={`nav-link ${isActive('/auth')}`}>Login</Link>
         </div>
       </div>
     </motion.nav>
