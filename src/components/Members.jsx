@@ -9,8 +9,20 @@ export default function Members() {
     // Simulated real-time data fetch
     const fetchMembers = () => {
       const currentMembers = [
-        { username: 'Andres_rios', role: 'Owner', joinDate: '2023-01-15', lastActive: 'An week ago' },
-        { username: 'MarcSpector', role: 'Owner', joinDate: '2023-01-15', lastActive: 'An week ago' },
+        { 
+          username: 'Andres_rios', 
+          role: 'Owner', 
+          joinDate: '2024-07-12', 
+          lastActive: 'An week ago',
+          discordId: '123456789012345678'
+        },
+        { 
+          username: 'MarcSpector', 
+          role: 'Owner', 
+          joinDate: '2024-07-12', 
+          lastActive: 'An week ago',
+          discordId: '876543210987654321'
+        },
       ];
       setMembers(currentMembers);
     };
@@ -59,6 +71,9 @@ export default function Members() {
                     {member.role === 'Owner' && (
                       <StarIcon className="w-5 h-5 text-yellow-500" />
                     )}
+                  </div>
+                  <div className="text-sm text-gray-400 mb-2">
+                    Discord ID: {member.discordId}
                   </div>
                   <div className="flex flex-wrap items-center gap-2 text-sm">
                     <span className={`px-2 py-0.5 rounded-full ${

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
 import { validateEmail } from '../../utils/validation';
-import { EnvelopeIcon, LockClosedIcon, UserIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
+import { EnvelopeIcon, LockClosedIcon, UserIcon, ChatBubbleBottomCenterTextIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 
 export default function SignupForm() {
   const { signup } = useAuth();
@@ -10,7 +10,8 @@ export default function SignupForm() {
     username: '',
     email: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    discordId: ''
   });
   const [error, setError] = useState('');
 
@@ -19,6 +20,18 @@ export default function SignupForm() {
     
     if (!formData.username) {
       setError('Username is required');
+      return;
+    }
+
+    if (!formData.discordId) {
+      setError('Discord ID is required');
+      return;
+    }
+
+    // Validate Discord ID format (17-18 digits)
+    const discordIdRegex = /^\d{17,18}$/;
+    if (!discordIdRegex.test(formData.discordId)) {
+      setError('Invalid Discord ID format. Must be 17-18 digits');
       return;
     }
 
@@ -40,9 +53,14 @@ export default function SignupForm() {
   };
 
   const handleChange = (e) => {
+    const { name, value } = e.target;
+    // Only allow numbers for Discord ID
+    if (name === 'discordId' && value !== '' && !/^\d+$/.test(value)) {
+      return;
+    }
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [name]: value
     });
     setError('');
   };
@@ -71,6 +89,25 @@ export default function SignupForm() {
                 onChange={handleChange}
                 className="w-full bg-black/50 border border-white/10 rounded-lg pl-10 pr-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-red-500"
                 placeholder="Choose a username"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label htmlFor="discordId" className="block text-sm font-medium text-gray-300 mb-1">
+              Discord ID (17-18 digits)
+            </label>
+            <div className="relative">
+              <ChatBubbleBottomCenterTextIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <input
+                type="text"
+                id="discordId"
+                name="discordId"
+                value={formData.discordId}
+                onChange={handleChange}
+                maxLength="18"
+                className="w-full bg-black/50 border border-white/10 rounded-lg pl-10 pr-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-red-500"
+                placeholder="Enter your Discord ID (numbers only)"
               />
             </div>
           </div>
@@ -145,11 +182,13 @@ export default function SignupForm() {
           <div className="flex items-start gap-3">
             <ExclamationTriangleIcon className="h-6 w-6 text-yellow-500 flex-shrink-0" />
             <div className="space-y-1">
-              <p className="text-yellow-200 text-sm font-medium">Supported Email Providers:</p>
+              <p className="text-yellow-200 text-sm font-medium">Requirements:</p>
               <ul className="text-yellow-100/80 text-sm space-y-1">
                 <li>• Gmail (@gmail.com)</li>
                 <li>• Hotmail (@hotmail.com)</li>
                 <li>• ProtonMail (@proton.me, @protonmail.com)</li>
+                <li>• Discord ID (17-18 digits)</li>
+                <li>• Attention: Always use your real Discord username and ID. Using fake usernames, emails, or Discord IDs will result in disciplinary action.</li>
               </ul>
             </div>
           </div>

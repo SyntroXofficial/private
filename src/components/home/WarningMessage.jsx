@@ -35,6 +35,12 @@ export default function WarningMessage() {
                 </Link>
               </div>
             </div>
+
+            <div className="mt-4 p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
+              <p className="text-red-400 text-sm">
+                I am not responsible for anything. Anyone who attempts to bypass any website security measures or related protections will face consequences.
+              </p>
+            </div>
           </div>
         </div>
       </div>

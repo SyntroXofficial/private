@@ -13,6 +13,7 @@ import OtherServices from './components/OtherServices';
 import Members from './components/Members';
 import Feedback from './components/Feedback';
 import AuthPage from './components/auth/AuthPage';
+import UserProfile from './components/UserProfile';
 import './styles/globals.css';
 
 function App() {
@@ -33,6 +34,7 @@ function App() {
               <Route path="/accounts" element={<Accounts />} />
               <Route path="/members" element={<Members />} />
               <Route path="/feedback" element={<Feedback />} />
+              <Route path="/profile" element={<UserProfile />} />
             </Route>
           </Routes>
         </div>

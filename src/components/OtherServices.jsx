@@ -2,38 +2,41 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { CloudArrowUpIcon, FilmIcon, UserGroupIcon, ChatBubbleBottomCenterTextIcon } from '@heroicons/react/24/outline';
-
-const services = [
-  {
-    icon: CloudArrowUpIcon,
-    title: 'GeForce NOW',
-    description: 'Cloud gaming platform powered by NVIDIA. Play your favorite games on any device.',
-    path: '/geforce-now'
-  },
-  {
-    icon: FilmIcon,
-    title: 'Stremio',
-    description: 'Stream movies, TV shows, and more with our enhanced Stremio service.',
-    path: '/stremio'
-  },
-  {
-    icon: UserGroupIcon,
-    title: 'Members',
-    description: 'View our team members. Currently 2 active members.',
-    path: '/members',
-    stats: '2 Members',
-    members: ['Andres_rios', 'MarcSpector']
-  },
-  {
-    icon: ChatBubbleBottomCenterTextIcon,
-    title: 'Feedback',
-    description: 'Check community feedback and suggestions.',
-    path: '/feedback',
-    stats: '0 Feedbacks'
-  }
-];
+import { useFeedbackStore } from '../hooks/useFeedbackStore';
 
 export default function OtherServices() {
+  const { feedbacks } = useFeedbackStore();
+
+  const services = [
+    {
+      icon: CloudArrowUpIcon,
+      title: 'GeForce NOW',
+      description: 'Cloud gaming platform powered by NVIDIA. Play your favorite games on any device.',
+      path: '/geforce-now'
+    },
+    {
+      icon: FilmIcon,
+      title: 'Stremio',
+      description: 'Stream movies, TV shows, and more with our enhanced Stremio service.',
+      path: '/stremio'
+    },
+    {
+      icon: UserGroupIcon,
+      title: 'Members',
+      description: 'View our team members. Currently 2 active members.',
+      path: '/members',
+      stats: '2 Members',
+      members: ['Andres_rios', 'MarcSpector']
+    },
+    {
+      icon: ChatBubbleBottomCenterTextIcon,
+      title: 'Feedback',
+      description: 'Check community feedback and suggestions.',
+      path: '/feedback',
+      stats: `${feedbacks.length} Feedbacks`
+    }
+  ];
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
