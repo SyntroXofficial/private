@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { UserCircleIcon } from '@heroicons/react/24/outline';
 
 export default function UserProfile() {
-  const { user } = useAuth();
+  const { user, updateProfilePic } = useAuth();
   const [profilePicUrl, setProfilePicUrl] = useState(user?.profilePic || '');
   const [isEditing, setIsEditing] = useState(false);
   const [error, setError] = useState('');
@@ -15,8 +15,7 @@ export default function UserProfile() {
       return;
     }
 
-    // Here you would typically update the profile pic in your backend
-    // For now, we'll just update the local state
+    updateProfilePic(profilePicUrl.trim());
     setIsEditing(false);
     setError('');
   };
