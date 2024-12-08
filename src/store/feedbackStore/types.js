@@ -10,12 +10,17 @@ export interface Feedback {
   };
 }
 
-export interface FeedbackStore {
+export interface FeedbackState {
   feedbacks: Feedback[];
   isLoading: boolean;
   error: string | null;
+}
+
+export interface FeedbackActions {
+  initialize: () => () => void;
   fetchFeedbacks: () => void;
   addFeedback: (feedback: Partial<Feedback>) => Feedback;
   addReaction: (feedbackId: string, reaction: string) => void;
-  initializeRealtime: () => () => void;
 }
+
+export type FeedbackStore = FeedbackState & FeedbackActions;

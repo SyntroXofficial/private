@@ -2,64 +2,67 @@ import { create } from 'zustand';
 import { 
   collection, 
   addDoc, 
-  getDocs, 
   query, 
-  orderBy,
+  orderBy, 
   onSnapshot,
   updateDoc,
   doc,
-  serverTimestamp 
+  serverTimestamp,
+  limit 
 } from 'firebase/firestore';
-import { db } from '../services/firebaseConfig';
+import { db, COLLECTIONS } from '../services/firebase';
 
 const useFeedbackStore = create((set, get) => ({
   feedbacks: [],
-  isLoading: false,
+  isLoading: true,
   error: null,
-  unsubscribe: null,
 
-  fetchFeedbacks: async () => {
-    set({ isLoading: true });
+  initialize: () => {
     try {
-      const q = query(collection(db, 'feedbacks'), orderBy('timestamp', 'desc'));
-      const querySnapshot = await getDocs(q);
-      const feedbacks = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      set({ feedbacks, isLoading: false });
+      const q = query(
+        collection(db, COLLECTIONS.FEEDBACKS),
+        orderBy('timestamp', 'desc'),
+        limit(50) // Limit to last 50 feedbacks for better performance
+      );
+
+      const unsubscribe = onSnapshot(q, 
+        (snapshot) => {
+          const feedbacks = [];
+          snapshot.forEach((doc) => {
+            feedbacks.push({ id: doc.id, ...doc.data() });
+          });
+          set({ feedbacks, isLoading: false });
+        },
+        (error) => {
+          console.error('Error fetching feedbacks:', error);
+          set({ error: error.message, isLoading: false });
+        }
+      );
+
+      return () => {
+        unsubscribe();
+        set({ feedbacks: [], isLoading: true, error: null });
+      };
     } catch (error) {
+      console.error('Error initializing feedback store:', error);
       set({ error: error.message, isLoading: false });
-      console.error('Error fetching feedbacks:', error);
+      return () => {};
     }
   },
 
   addFeedback: async (feedback) => {
     try {
-      const docRef = await addDoc(collection(db, 'feedbacks'), {
+      const feedbackData = {
         ...feedback,
         reactions: {
           '👍': 0, '❤️': 0, '🎮': 0, '🌟': 0,
           '🔥': 0, '👏': 0, '🎯': 0, '💪': 0
         },
         timestamp: serverTimestamp()
-      });
-
-      const newFeedback = {
-        id: docRef.id,
-        ...feedback,
-        reactions: {
-          '👍': 0, '❤️': 0, '🎮': 0, '🌟': 0,
-          '🔥': 0, '👏': 0, '🎯': 0, '💪': 0
-        },
-        timestamp: new Date().toISOString()
       };
 
-      set(state => ({
-        feedbacks: [newFeedback, ...state.feedbacks]
-      }));
-
-      return newFeedback;
+      const docRef = await addDoc(collection(db, COLLECTIONS.FEEDBACKS), feedbackData);
+      return { id: docRef.id, ...feedbackData };
     } catch (error) {
       console.error('Error adding feedback:', error);
       throw error;
@@ -68,65 +71,22 @@ const useFeedbackStore = create((set, get) => ({
 
   addReaction: async (feedbackId, reaction) => {
     try {
-      const feedbackRef = doc(db, 'feedbacks', feedbackId);
-      await updateDoc(feedbackRef, {
-        [`reactions.${reaction}`]: get().feedbacks.find(f => f.id === feedbackId).reactions[reaction] + 1
-      });
-
-      set(state => ({
-        feedbacks: state.feedbacks.map(feedback => {
-          if (feedback.id === feedbackId) {
-            return {
-              ...feedback,
-              reactions: {
-                ...feedback.reactions,
-                [reaction]: (feedback.reactions[reaction] || 0) + 1
-              }
-            };
-          }
-          return feedback;
-        })
-      }));
+      const feedbackRef = doc(db, COLLECTIONS.FEEDBACKS, feedbackId);
+      const feedback = get().feedbacks.find(f => f.id === feedbackId);
+      
+      if (feedback) {
+        await updateDoc(feedbackRef, {
+          [`reactions.${reaction}`]: (feedback.reactions[reaction] || 0) + 1
+        });
+      }
     } catch (error) {
       console.error('Error adding reaction:', error);
+      throw error;
     }
   },
 
-  initializeRealtime: () => {
-    const q = query(collection(db, 'feedbacks'), orderBy('timestamp', 'desc'));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      snapshot.docChanges().forEach((change) => {
-        if (change.type === 'added') {
-          set(state => ({
-            feedbacks: [
-              { id: change.doc.id, ...change.doc.data() },
-              ...state.feedbacks.filter(f => f.id !== change.doc.id)
-            ]
-          }));
-        }
-        if (change.type === 'modified') {
-          set(state => ({
-            feedbacks: state.feedbacks.map(feedback =>
-              feedback.id === change.doc.id
-                ? { id: change.doc.id, ...change.doc.data() }
-                : feedback
-            )
-          }));
-        }
-        if (change.type === 'removed') {
-          set(state => ({
-            feedbacks: state.feedbacks.filter(f => f.id !== change.doc.id)
-          }));
-        }
-      });
-    });
-
-    set({ unsubscribe });
-    return () => {
-      if (get().unsubscribe) {
-        get().unsubscribe();
-      }
-    };
+  cleanup: () => {
+    set({ feedbacks: [], isLoading: true, error: null });
   }
 }));
 

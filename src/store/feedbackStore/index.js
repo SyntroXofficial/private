@@ -6,9 +6,24 @@ const useFeedbackStore = create((set) => ({
   isLoading: false,
   error: null,
 
+  initialize: () => {
+    try {
+      const storedFeedbacks = getFeedbacksFromStorage();
+      set({ feedbacks: storedFeedbacks, isLoading: false });
+    } catch (error) {
+      set({ error: error.message, isLoading: false });
+    }
+    return () => {}; // Cleanup function
+  },
+
   fetchFeedbacks: () => {
-    const storedFeedbacks = getFeedbacksFromStorage();
-    set({ feedbacks: storedFeedbacks });
+    set({ isLoading: true });
+    try {
+      const storedFeedbacks = getFeedbacksFromStorage();
+      set({ feedbacks: storedFeedbacks, isLoading: false });
+    } catch (error) {
+      set({ error: error.message, isLoading: false });
+    }
   },
 
   addFeedback: (feedback) => {
@@ -49,13 +64,6 @@ const useFeedbackStore = create((set) => ({
       saveFeedbacksToStorage(updatedFeedbacks);
       return { feedbacks: updatedFeedbacks };
     });
-  },
-
-  initializeRealtime: () => {
-    // Subscribe to real-time updates if needed
-    return () => {
-      // Cleanup function
-    };
   }
 }));
 
