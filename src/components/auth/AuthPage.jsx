@@ -3,9 +3,9 @@ import { motion } from 'framer-motion';
 
 export default function AuthPage() {
   const handleDiscordLogin = () => {
-    const DISCORD_CLIENT_ID = import.meta.env.VITE_DISCORD_CLIENT_ID;
-    const redirectUri = 'https://private-web-xyz.vercel.app';
-    const scope = 'email identify';
+    const DISCORD_CLIENT_ID = '1194787654321098765'; // Your Discord application client ID
+    const redirectUri = `${window.location.origin}/auth/callback`;
+    const scope = 'identify email';
     
     const params = new URLSearchParams({
       client_id: DISCORD_CLIENT_ID,
@@ -14,7 +14,7 @@ export default function AuthPage() {
       scope: scope
     });
 
-    window.location.href = `https://discord.com/oauth2/authorize?${params.toString()}`;
+    window.location.href = `https://discord.com/api/oauth2/authorize?${params.toString()}`;
   };
 
   return (
