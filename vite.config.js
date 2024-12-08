@@ -1,21 +1,8 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import compression from 'vite-plugin-compression';
-import { ViteImageOptimizer } from 'vite-plugin-image-optimizer';
 
 export default defineConfig({
-  plugins: [
-    react(),
-    compression({
-      algorithm: 'gzip',
-      ext: '.gz'
-    }),
-    compression({
-      algorithm: 'brotliCompress',
-      ext: '.br'
-    }),
-    ViteImageOptimizer()
-  ],
+  plugins: [react()],
   build: {
     outDir: 'dist',
     sourcemap: false,
@@ -32,5 +19,8 @@ export default defineConfig({
   server: {
     host: true,
     port: 3000
+  },
+  optimizeDeps: {
+    include: ['firebase/app', 'firebase/firestore', 'firebase/auth', 'firebase/storage']
   }
 });
