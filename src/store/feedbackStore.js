@@ -1,98 +1,135 @@
 import { create } from 'zustand';
 import { supabase } from '../lib/supabase';
+import { socketService } from '../services/socketService';
 
-const useFeedbackStore = create((set, get) => ({
-    feedbacks: [],
-    isLoading: false,
-    error: null,
+export const useFeedbackStore = create((set, get) => ({
+  feedbacks: [],
+  isLoading: false,
+  error: null,
 
-    fetchFeedbacks: async () => {
-        set({ isLoading: true });
-        try {
-            const { data, error } = await supabase
-                .from('feedbacks')
-                .select('*')
-                .order('created_at', { ascending: false });
-
-            if (error) throw error;
-            set({ feedbacks: data, isLoading: false });
-
-            // Subscribe to real-time changes after initial fetch
-            supabase
-                .channel('public:feedbacks')
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'feedbacks' }, payload => {
-                    console.log('Change received!', payload);
-                    if (payload.eventType === 'INSERT') {
-                        set(state => ({ feedbacks: [payload.new, ...state.feedbacks] }));
-                    } else if (payload.eventType === 'UPDATE') {
-                        set(state => ({
-                            feedbacks: state.feedbacks.map(f =>
-                                f.id === payload.old.id ? payload.new : f
-                            )
-                        }));
-                    }
-
-                    // Add logic for DELETE if needed
-                })
-                .subscribe()
-
-        } catch (error) {
-            set({ error: error.message, isLoading: false });
+  initializeRealtime: () => {
+    // Subscribe to real-time database changes
+    const feedbackSubscription = supabase
+      .channel('feedbacks')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'feedbacks' },
+        payload => {
+          const { new: newFeedback, old: oldFeedback, eventType } = payload;
+          
+          switch (eventType) {
+            case 'INSERT':
+              set(state => ({
+                feedbacks: [newFeedback, ...state.feedbacks]
+              }));
+              break;
+            case 'UPDATE':
+              set(state => ({
+                feedbacks: state.feedbacks.map(feedback =>
+                  feedback.id === oldFeedback.id ? newFeedback : feedback
+                )
+              }));
+              break;
+            case 'DELETE':
+              set(state => ({
+                feedbacks: state.feedbacks.filter(feedback => 
+                  feedback.id !== oldFeedback.id
+                )
+              }));
+              break;
+          }
         }
-    },
+      )
+      .subscribe();
 
-    addFeedback: async (feedback) => {
-        try {
-            const newFeedback = {
-                ...feedback,
-                reactions: {
-                    '👍': 0, '❤️': 0, '🎮': 0, '🌟': 0,
-                    '🔥': 0, '👏': 0, '🎯': 0, '💪': 0
-                },
-                created_at: new Date().toISOString()
-            };
+    // Subscribe to real-time socket updates for reactions
+    socketService.subscribeFeedbackUpdates(update => {
+      if (update.type === 'reaction') {
+        set(state => ({
+          feedbacks: state.feedbacks.map(feedback =>
+            feedback.id === update.feedbackId
+              ? { ...feedback, reactions: update.reactions }
+              : feedback
+          )
+        }));
+      }
+    });
 
-            const { data, error } = await supabase
-                .from('feedbacks')
-                .insert([newFeedback])
-                .select()
-                .single();
+    return () => {
+      feedbackSubscription.unsubscribe();
+      socketService.unsubscribeFeedbackUpdates();
+    };
+  },
 
-            if (error) throw error;
+  fetchFeedbacks: async () => {
+    set({ isLoading: true });
+    try {
+      const { data, error } = await supabase
+        .from('feedbacks')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-            // No need to update state here, real-time subscription will handle it
-            return data;
-        } catch (error) {
-            set({ error: error.message });
-            throw error;
-        }
-    },
-
-    addReaction: async (feedbackId, reaction) => {
-        try {
-            const feedback = get().feedbacks.find(f => f.id === feedbackId);
-            if (!feedback) return;
-
-            const updatedReactions = {
-                ...feedback.reactions,
-                [reaction]: (feedback.reactions[reaction] || 0) + 1
-            };
-
-            const { data, error } = await supabase
-                .from('feedbacks')
-                .update({ reactions: updatedReactions })
-                .eq('id', feedbackId)
-                .select()
-                .single();
-
-            if (error) throw error;
-
-            // No need to update state here, real-time subscription will handle it
-
-        } catch (error) {
-            set({ error: error.message });
-        }
+      if (error) throw error;
+      set({ feedbacks: data, isLoading: false });
+    } catch (error) {
+      set({ error: error.message, isLoading: false });
     }
-}));
+  },
 
-export default useFeedbackStore;
+  addFeedback: async (feedback) => {
+    try {
+      const { data, error } = await supabase
+        .from('feedbacks')
+        .insert([{
+          ...feedback,
+          reactions: {},
+          created_at: new Date().toISOString()
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+      
+      // Emit socket event for real-time updates
+      socketService.emitFeedbackUpdate({
+        type: 'new',
+        feedback: data
+      });
+
+      return data;
+    } catch (error) {
+      set({ error: error.message });
+      throw error;
+    }
+  },
+
+  addReaction: async (feedbackId, reaction) => {
+    try {
+      const feedback = get().feedbacks.find(f => f.id === feedbackId);
+      if (!feedback) return;
+
+      const updatedReactions = {
+        ...feedback.reactions,
+        [reaction]: (feedback.reactions[reaction] || 0) + 1
+      };
+
+      const { data, error } = await supabase
+        .from('feedbacks')
+        .update({ reactions: updatedReactions })
+        .eq('id', feedbackId)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Emit socket event for real-time updates
+      socketService.emitFeedbackUpdate({
+        type: 'reaction',
+        feedbackId,
+        reactions: updatedReactions
+      });
+
+    } catch (error) {
+      set({ error: error.message });
+    }
+  }
+}));
