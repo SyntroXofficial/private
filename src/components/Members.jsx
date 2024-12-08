@@ -1,56 +1,18 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
 import { UserIcon, StarIcon, ClockIcon } from '@heroicons/react/24/outline';
-import useMemberStore from '../store/memberStore';
-import { useAuth } from '../context/AuthContext';
+import { useMembers } from '../hooks/useMembers';
 
 export default function Members() {
-  const { members, onlineUsers, fetchMembers, initializeRealtime, updateMemberStatus } = useMemberStore();
-  const { user } = useAuth();
+  const { members, onlineCount, isLoading } = useMembers();
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        await fetchMembers();
-      } catch (error) {
-        console.error('Error fetching members:', error);
-      }
-    };
-
-    fetchData();
-    const cleanup = initializeRealtime();
-
-    // Update user's online status
-    if (user?.id) {
-      updateMemberStatus(user.id, true);
-
-      const handleVisibilityChange = () => {
-        if (user?.id) {
-          updateMemberStatus(user.id, !document.hidden);
-        }
-      };
-
-      const handleBeforeUnload = () => {
-        if (user?.id) {
-          updateMemberStatus(user.id, false);
-        }
-      };
-
-      document.addEventListener('visibilitychange', handleVisibilityChange);
-      window.addEventListener('beforeunload', handleBeforeUnload);
-
-      return () => {
-        cleanup();
-        if (user?.id) {
-          updateMemberStatus(user.id, false);
-        }
-        document.removeEventListener('visibilitychange', handleVisibilityChange);
-        window.removeEventListener('beforeunload', handleBeforeUnload);
-      };
-    }
-
-    return cleanup;
-  }, [user?.id]);
+  if (isLoading) {
+    return (
+      <div className="min-h-screen pt-24 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-500"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen pt-24">
@@ -66,7 +28,7 @@ export default function Members() {
           </p>
           <div className="mt-4 inline-block px-4 py-2 bg-red-500/20 border border-red-500/30 rounded-lg">
             <span className="text-white font-bold">
-              {members.length} Members • {onlineUsers.size} Online
+              {members.length} Members • {onlineCount} Online
             </span>
           </div>
         </motion.div>
@@ -93,7 +55,7 @@ export default function Members() {
                     </div>
                   )}
                   <span className={`absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-black ${
-                    onlineUsers.has(member.id) ? 'bg-green-500' : 'bg-gray-500'
+                    member.isOnline ? 'bg-green-500' : 'bg-gray-500'
                   }`} />
                 </div>
                 <div className="flex-1">
@@ -116,7 +78,7 @@ export default function Members() {
                     </span>
                     <span className="text-gray-400 flex items-center gap-1">
                       <ClockIcon className="w-4 h-4" />
-                      {onlineUsers.has(member.id) ? 'Now' : member.lastActive || 'Offline'}
+                      {member.isOnline ? 'Now' : member.lastSeen || 'Offline'}
                     </span>
                   </div>
                   <div className="mt-2 text-sm text-gray-400">

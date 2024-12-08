@@ -7,20 +7,28 @@ import FeedbackList from './feedback/FeedbackList';
 import useFeedbackStore from '../store/feedbackStore';
 
 export default function Feedback() {
-  const { fetchFeedbacks, initializeRealtime } = useFeedbackStore();
+  const { initialize, feedbacks, isLoading, error } = useFeedbackStore();
 
   useEffect(() => {
-    // Initial fetch
-    fetchFeedbacks();
+    const unsubscribe = initialize();
+    return () => unsubscribe();
+  }, [initialize]);
 
-    // Set up real-time listener
-    const cleanup = initializeRealtime();
+  if (isLoading) {
+    return (
+      <div className="min-h-screen pt-24 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-500"></div>
+      </div>
+    );
+  }
 
-    // Cleanup on unmount
-    return () => {
-      if (cleanup) cleanup();
-    };
-  }, [fetchFeedbacks, initializeRealtime]);
+  if (error) {
+    return (
+      <div className="min-h-screen pt-24 flex items-center justify-center">
+        <div className="text-red-500">Error loading feedbacks: {error}</div>
+      </div>
+    );
+  }
 
   return (
     <motion.div
@@ -32,7 +40,7 @@ export default function Feedback() {
         <FeedbackHeader />
         <FeedbackWarning />
         <FeedbackForm />
-        <FeedbackList />
+        <FeedbackList feedbacks={feedbacks} />
       </div>
     </motion.div>
   );

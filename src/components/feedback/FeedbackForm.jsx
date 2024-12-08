@@ -17,7 +17,7 @@ export default function FeedbackForm() {
   const [submitted, setSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { user } = useAuth();
-  const { addFeedback } = useFeedbackStore();
+  const addFeedback = useFeedbackStore(state => state.addFeedback);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -32,8 +32,7 @@ export default function FeedbackForm() {
         type: feedbackType,
         accountName: accountName.trim(),
         message: message.trim(),
-        username: user?.username || 'Anonymous',
-        timestamp: new Date().toISOString()
+        username: user?.username || 'Anonymous'
       });
 
       setSubmitted(true);

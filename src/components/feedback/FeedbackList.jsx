@@ -14,8 +14,16 @@ const REACTIONS = [
   { emoji: '💪', tooltip: 'Strong' }
 ];
 
-export default function FeedbackList() {
-  const { feedbacks, addReaction } = useFeedbackStore();
+export default function FeedbackList({ feedbacks }) {
+  const addReaction = useFeedbackStore(state => state.addReaction);
+
+  const handleReaction = async (feedbackId, emoji) => {
+    try {
+      await addReaction(feedbackId, emoji);
+    } catch (error) {
+      console.error('Error adding reaction:', error);
+    }
+  };
 
   return (
     <div className="mt-16">
@@ -39,7 +47,7 @@ export default function FeedbackList() {
                   <div className="flex items-center gap-3 mb-2">
                     <span className="font-semibold text-white">{feedback.username}</span>
                     <span className="text-gray-300">
-                      {new Date(feedback.timestamp).toLocaleString()}
+                      {new Date(feedback.timestamp?.toDate()).toLocaleString()}
                     </span>
                     <span className="px-2 py-1 rounded-full text-xs bg-red-500/20 text-red-400 border border-red-500/30">
                       {feedback.type.toUpperCase()}
@@ -55,7 +63,7 @@ export default function FeedbackList() {
                     {REACTIONS.map(({ emoji, tooltip }) => (
                       <button
                         key={emoji}
-                        onClick={() => addReaction(feedback.id, emoji)}
+                        onClick={() => handleReaction(feedback.id, emoji)}
                         className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/30 hover:bg-black/50 transition-colors group relative"
                         title={tooltip}
                       >

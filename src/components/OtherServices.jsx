@@ -2,9 +2,11 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { CloudArrowUpIcon, FilmIcon, UserGroupIcon, ChatBubbleBottomCenterTextIcon } from '@heroicons/react/24/outline';
+import { useMembers } from '../hooks/useMembers';
 import useFeedbackStore from '../store/feedbackStore';
 
 export default function OtherServices() {
+  const { members, onlineCount } = useMembers();
   const feedbacks = useFeedbackStore(state => state.feedbacks);
 
   const services = [
@@ -23,10 +25,10 @@ export default function OtherServices() {
     {
       icon: UserGroupIcon,
       title: 'Members',
-      description: 'View our team members. Currently 2 active members.',
+      description: `View our team members. Currently ${onlineCount} active members.`,
       path: '/members',
-      stats: '2 Members',
-      members: ['Andres_rios', 'MarcSpector']
+      stats: `${members.length} Members`,
+      members: members.filter(m => m.role === 'Owner').map(m => m.username)
     },
     {
       icon: ChatBubbleBottomCenterTextIcon,
