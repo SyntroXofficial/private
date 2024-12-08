@@ -24,7 +24,13 @@
     "socket.io-client": "^4.7.2",
     "zustand": "^4.4.7",
     "@supabase/supabase-js": "^2.39.1",
-    "uuid": "^9.0.1"
+    "uuid": "^9.0.1",
+    "socket.io": "^4.7.2",
+    "chart.js": "^4.4.1",
+    "react-chartjs-2": "^5.2.0",
+    "date-fns": "^3.0.6",
+    "js-cookie": "^3.0.5",
+    "crypto-js": "^4.2.0"
   },
   "devDependencies": {
     "@types/react": "^18.2.15",
