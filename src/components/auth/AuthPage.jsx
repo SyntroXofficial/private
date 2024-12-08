@@ -1,13 +1,10 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
 
 export default function AuthPage() {
-  const navigate = useNavigate();
-
   const handleDiscordLogin = () => {
     const DISCORD_CLIENT_ID = import.meta.env.VITE_DISCORD_CLIENT_ID;
-    const redirectUri = 'https://prime-nexo-xyz.netlify.app/auth/callback';
+    const redirectUri = 'https://private-web-xyz.vercel.app/auth/callback';
     const scope = 'identify email';
     
     const params = new URLSearchParams({
@@ -26,7 +23,7 @@ export default function AuthPage() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="text-center mb-12"
+          className="text-center"
         >
           <h1 className="text-4xl font-bold text-red-500 mb-4">Welcome to Prime Nexo XYZ</h1>
           <p className="text-gray-400">Sign in with Discord to access premium gaming services</p>
@@ -35,7 +32,7 @@ export default function AuthPage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="glass-effect p-8 rounded-xl"
+          className="glass-effect p-8 rounded-xl mt-8"
         >
           <button
             onClick={handleDiscordLogin}
