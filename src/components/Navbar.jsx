@@ -42,7 +42,7 @@ export default function Navbar() {
                     <img src={user.avatar} alt={user.username} className="w-8 h-8 rounded-full" />
                   ) : (
                     <div className="w-8 h-8 rounded-full bg-red-500/10 flex items-center justify-center">
-                      <span className="text-red-500">{user?.username?.[0]}</span>
+                      <span className="text-red-500">{user?.username}</span>
                     </div>
                   )}
                   <span className="text-gray-300 hover:text-white">{user?.username}</span>
