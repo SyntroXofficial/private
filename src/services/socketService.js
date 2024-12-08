@@ -8,6 +8,7 @@ class SocketService {
     this.reconnectAttempts = 0;
     this.maxReconnectAttempts = 5;
     this.listeners = new Map();
+    this.metricsInterval = null;
   }
 
   initialize(userId, authToken) {
@@ -29,6 +30,7 @@ class SocketService {
     this.setupEventHandlers();
     this.setupHeartbeat();
     this.setupEncryption();
+    this.startMetricsPolling();
   }
 
   setupEventHandlers() {
@@ -48,7 +50,10 @@ class SocketService {
       this.broadcastEvent('error', { error });
     });
 
-    // Dashboard specific events
+    this.socket.on('serverMetrics', (data) => {
+      this.broadcastEvent('serverMetrics', this.decryptData(data));
+    });
+
     this.socket.on('dashboardUpdate', (data) => {
       this.broadcastEvent('dashboardUpdate', this.decryptData(data));
     });
@@ -60,6 +65,20 @@ class SocketService {
     this.socket.on('userActivity', (data) => {
       this.broadcastEvent('userActivity', this.decryptData(data));
     });
+  }
+
+  startMetricsPolling() {
+    // Clear any existing interval
+    if (this.metricsInterval) {
+      clearInterval(this.metricsInterval);
+    }
+
+    // Start polling server metrics every 5 seconds
+    this.metricsInterval = setInterval(() => {
+      if (this.socket?.connected) {
+        this.socket.emit('getServerMetrics');
+      }
+    }, 5000);
   }
 
   setupHeartbeat() {
@@ -129,6 +148,9 @@ class SocketService {
   }
 
   disconnect() {
+    if (this.metricsInterval) {
+      clearInterval(this.metricsInterval);
+    }
     if (this.socket) {
       this.socket.disconnect();
       this.socket = null;
