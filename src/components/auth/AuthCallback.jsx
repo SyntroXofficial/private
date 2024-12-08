@@ -32,8 +32,13 @@ export default function AuthCallback() {
 
       try {
         const { user, isNewUser } = await handleDiscordAuth(code);
-        await login(user);
+        
+        if (!user) {
+          throw new Error('No user data received');
+        }
 
+        await login(user);
+        
         toast.success(isNewUser ? 'Account created successfully!' : 'Welcome back!');
         navigate('/dashboard');
       } catch (error) {
