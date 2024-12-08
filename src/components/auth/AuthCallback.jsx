@@ -1,7 +1,9 @@
 import React, { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
 import { motion } from 'framer-motion';
+import { handleDiscordAuth } from '../../services/discord/auth';
+import { useAuth } from '../../context/AuthContext';
+import { toast } from 'react-hot-toast';
 
 export default function AuthCallback() {
   const navigate = useNavigate();
@@ -9,35 +11,40 @@ export default function AuthCallback() {
   const { login } = useAuth();
 
   useEffect(() => {
-    const handleCallback = async () => {
+    const handleAuth = async () => {
       const searchParams = new URLSearchParams(location.search);
       const code = searchParams.get('code');
+      const error = searchParams.get('error');
+      const errorDescription = searchParams.get('error_description');
 
-      if (code) {
-        try {
-          const result = await login(code);
-          if (result.success) {
-            navigate('/dashboard');
-          } else {
-            navigate('/auth', { 
-              state: { error: result.error || 'Authentication failed' }
-            });
-          }
-        } catch (error) {
-          console.error('Auth error:', error);
-          navigate('/auth', { 
-            state: { error: 'Failed to authenticate with Discord' }
-          });
-        }
-      } else {
-        navigate('/auth', { 
-          state: { error: 'No authentication code received' }
-        });
+      if (error) {
+        console.error('Discord auth error:', error, errorDescription);
+        toast.error(errorDescription || 'Authentication failed');
+        navigate('/auth');
+        return;
+      }
+
+      if (!code) {
+        toast.error('No authentication code received');
+        navigate('/auth');
+        return;
+      }
+
+      try {
+        const { user, isNewUser } = await handleDiscordAuth(code);
+        await login(user);
+
+        toast.success(isNewUser ? 'Account created successfully!' : 'Welcome back!');
+        navigate('/dashboard');
+      } catch (error) {
+        console.error('Auth error:', error);
+        toast.error('Failed to authenticate with Discord');
+        navigate('/auth');
       }
     };
 
-    handleCallback();
-  }, [location, login, navigate]);
+    handleAuth();
+  }, [location, navigate, login]);
 
   return (
     <div className="min-h-screen flex items-center justify-center">

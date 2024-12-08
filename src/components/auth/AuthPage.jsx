@@ -1,20 +1,10 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { getDiscordAuthUrl } from '../../services/discord/auth';
 
 export default function AuthPage() {
   const handleDiscordLogin = () => {
-    const DISCORD_CLIENT_ID = '1315323672927666206';
-    const redirectUri = 'https://private-web-xyz.vercel.app';
-    const scope = 'email identify';
-    
-    const params = new URLSearchParams({
-      client_id: DISCORD_CLIENT_ID,
-      redirect_uri: redirectUri,
-      response_type: 'code',
-      scope: scope
-    });
-
-    window.location.href = `https://discord.com/oauth2/authorize?${params.toString()}`;
+    window.location.href = getDiscordAuthUrl();
   };
 
   return (
