@@ -13,7 +13,8 @@ export default defineConfig({
           ui: ['@heroicons/react', 'framer-motion']
         }
       }
-    }
+    },
+    assetsInlineLimit: 0 // Ensure assets are not inlined as base64
   },
   server: {
     host: true,
@@ -22,5 +23,6 @@ export default defineConfig({
   optimizeDeps: {
     include: ['firebase/app', 'firebase/firestore', 'firebase/auth', 'firebase/storage']
   },
-  base: '/'
+  base: '/',
+  publicDir: 'public'
 });
