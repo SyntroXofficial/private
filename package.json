@@ -20,7 +20,11 @@
     "tailwindcss": "^3.3.5",
     "autoprefixer": "^10.4.16",
     "postcss": "^8.4.31",
-    "web-vitals": "^3.5.0"
+    "web-vitals": "^3.5.0",
+    "socket.io-client": "^4.7.2",
+    "zustand": "^4.4.7",
+    "@supabase/supabase-js": "^2.39.1",
+    "uuid": "^9.0.1"
   },
   "devDependencies": {
     "@types/react": "^18.2.15",
