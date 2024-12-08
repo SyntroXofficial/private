@@ -1,6 +1,15 @@
 import { create } from 'zustand';
-import { socketService } from '../services/socketService';
-import { SOCKET_EVENTS } from '../services/socket/socketConfig';
+import { 
+  collection, 
+  query, 
+  orderBy, 
+  onSnapshot,
+  doc,
+  updateDoc,
+  getDocs,
+  where 
+} from 'firebase/firestore';
+import { db } from '../services/firebase';
 
 const useDashboardStore = create((set, get) => ({
   stats: {
@@ -9,7 +18,7 @@ const useDashboardStore = create((set, get) => ({
     bannedUsers: 0,
     newUsers: 0,
     serverStatus: 'Online',
-    uptime: '100%',
+    uptime: '0%',
     responseTime: 0,
     cpuUsage: 0,
     memoryUsage: 0,
@@ -30,74 +39,107 @@ const useDashboardStore = create((set, get) => ({
   systemLogs: [],
   activeAlerts: [],
   isInitialized: false,
-  isLoading: false,
+  isLoading: true,
   error: null,
 
   initialize: async () => {
     if (get().isInitialized) return;
 
     try {
-      set({ isLoading: true });
-      socketService.initialize();
-
-      // Subscribe to Socket.IO real-time updates
-      const dashboardUnsubscribe = socketService.subscribe(SOCKET_EVENTS.DASHBOARD_UPDATE, (data) => {
-        set(state => ({
-          stats: { ...state.stats, ...data.stats },
-          securityMetrics: { ...state.securityMetrics, ...data.security }
-        }));
+      // Subscribe to stats updates
+      const statsRef = doc(db, 'system', 'stats');
+      const statsUnsubscribe = onSnapshot(statsRef, (doc) => {
+        if (doc.exists()) {
+          set(state => ({
+            stats: { ...state.stats, ...doc.data() }
+          }));
+        }
       });
 
-      // Simulate initial data
-      set({
-        stats: {
-          totalUsers: 150,
-          activeUsers: 45,
-          bannedUsers: 5,
-          newUsers: 12,
-          serverStatus: 'Online',
-          uptime: '99.9%',
-          responseTime: 150,
-          cpuUsage: 45,
-          memoryUsage: 60,
-          networkTraffic: 1024 * 1024 * 100,
-          errorRate: 0.1
-        },
-        isInitialized: true,
-        isLoading: false
+      // Subscribe to security metrics
+      const securityRef = doc(db, 'system', 'security');
+      const securityUnsubscribe = onSnapshot(securityRef, (doc) => {
+        if (doc.exists()) {
+          set(state => ({
+            securityMetrics: { ...state.securityMetrics, ...doc.data() }
+          }));
+        }
       });
 
-      // Simulate periodic updates
-      const updateInterval = setInterval(() => {
-        set(state => ({
-          stats: {
-            ...state.stats,
-            cpuUsage: Math.floor(Math.random() * 20) + 35,
-            memoryUsage: Math.floor(Math.random() * 15) + 55,
-            responseTime: Math.floor(Math.random() * 100) + 100
-          }
-        }));
-      }, 5000);
+      // Subscribe to user activities
+      const activitiesQuery = query(
+        collection(db, 'activities'),
+        orderBy('timestamp', 'desc')
+      );
+      const activitiesUnsubscribe = onSnapshot(activitiesQuery, (snapshot) => {
+        const activities = [];
+        snapshot.forEach((doc) => {
+          activities.push({ id: doc.id, ...doc.data() });
+        });
+        set({ userActivities: activities });
+      });
+
+      // Subscribe to system logs
+      const logsQuery = query(
+        collection(db, 'systemLogs'),
+        orderBy('timestamp', 'desc')
+      );
+      const logsUnsubscribe = onSnapshot(logsQuery, (snapshot) => {
+        const logs = [];
+        snapshot.forEach((doc) => {
+          logs.push({ id: doc.id, ...doc.data() });
+        });
+        set({ systemLogs: logs });
+      });
+
+      // Subscribe to active alerts
+      const alertsQuery = query(
+        collection(db, 'alerts'),
+        where('active', '==', true)
+      );
+      const alertsUnsubscribe = onSnapshot(alertsQuery, (snapshot) => {
+        const alerts = [];
+        snapshot.forEach((doc) => {
+          alerts.push({ id: doc.id, ...doc.data() });
+        });
+        set({ activeAlerts: alerts });
+      });
+
+      set({ 
+        isInitialized: true, 
+        isLoading: false 
+      });
 
       return () => {
-        clearInterval(updateInterval);
-        dashboardUnsubscribe();
+        statsUnsubscribe();
+        securityUnsubscribe();
+        activitiesUnsubscribe();
+        logsUnsubscribe();
+        alertsUnsubscribe();
       };
-
     } catch (error) {
-      set({ error: error.message, isLoading: false });
+      set({ 
+        error: error.message, 
+        isLoading: false 
+      });
       console.error('Dashboard initialization error:', error);
     }
   },
 
-  clearAlert: (alertId) => {
-    set(state => ({
-      activeAlerts: state.activeAlerts.filter(alert => alert.id !== alertId)
-    }));
+  clearAlert: async (alertId) => {
+    try {
+      const alertRef = doc(db, 'alerts', alertId);
+      await updateDoc(alertRef, {
+        active: false,
+        resolvedAt: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('Error clearing alert:', error);
+      throw error;
+    }
   },
 
   cleanup: () => {
-    socketService.disconnect();
     set({
       isInitialized: false,
       activeAlerts: [],

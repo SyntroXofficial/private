@@ -1,125 +1,143 @@
 import { create } from 'zustand';
-import { socketService } from '../services/socketService';
-import { SOCKET_EVENTS } from '../services/socket/socketConfig';
+import { 
+  collection, 
+  query, 
+  orderBy, 
+  onSnapshot,
+  doc,
+  updateDoc,
+  where,
+  getDocs,
+  setDoc,
+  serverTimestamp
+} from 'firebase/firestore';
+import { db } from '../services/firebase';
 
 const useMemberStore = create((set, get) => ({
-  members: [
-    {
-      id: '1',
-      username: 'Andres_rios',
-      email: 'andres@example.com',
-      role: 'Owner',
-      discordId: '123456789012345678',
-      joinDate: '2024-01-15',
-      lastActive: 'Now',
-      banned: false
-    },
-    {
-      id: '2',
-      username: 'MarcSpector',
-      email: 'marc@example.com',
-      role: 'Owner',
-      discordId: '987654321098765432',
-      joinDate: '2024-01-15',
-      lastActive: '2h ago',
-      banned: false
-    }
-  ],
-  onlineUsers: new Set(['1', '2']),
-  isLoading: false,
+  members: [],
+  onlineUsers: new Set(),
+  isLoading: true,
   error: null,
 
-  initializeRealtime: () => {
-    socketService.initialize();
-    
-    const presenceUnsubscribe = socketService.subscribe(SOCKET_EVENTS.PRESENCE, ({ userId, status }) => {
-      set(state => {
-        const newOnlineUsers = new Set(state.onlineUsers);
-        if (status === 'online') {
-          newOnlineUsers.add(userId);
-        } else {
-          newOnlineUsers.delete(userId);
-        }
-        return { onlineUsers: newOnlineUsers };
-      });
-    });
-
-    return () => {
-      presenceUnsubscribe();
-    };
-  },
-
-  fetchMembers: () => {
-    const storedMembers = JSON.parse(localStorage.getItem('members') || '[]');
-    set({ members: storedMembers.length > 0 ? storedMembers : get().members });
-  },
-
-  updateMemberStatus: (memberId, isOnline) => {
+  fetchMembers: async () => {
     try {
-      set(state => {
-        const updatedMembers = state.members.map(member =>
-          member.id === memberId
-            ? { ...member, lastActive: isOnline ? 'Now' : new Date().toISOString() }
-            : member
-        );
+      const q = query(
+        collection(db, 'members'),
+        orderBy('joinDate', 'desc')
+      );
 
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        const members = [];
+        snapshot.forEach((doc) => {
+          members.push({ id: doc.id, ...doc.data() });
+        });
+        set({ members, isLoading: false });
+      }, (error) => {
+        console.error('Error fetching members:', error);
+        set({ error: error.message, isLoading: false });
+      });
+
+      return unsubscribe;
+    } catch (error) {
+      set({ error: error.message, isLoading: false });
+      console.error('Error setting up members listener:', error);
+    }
+  },
+
+  updateMemberStatus: async (memberId, isOnline) => {
+    if (!memberId) return;
+
+    try {
+      const statusRef = doc(db, 'memberStatus', memberId);
+      await setDoc(statusRef, {
+        isOnline,
+        lastUpdated: serverTimestamp(),
+        lastActive: isOnline ? 'Now' : new Date().toISOString()
+      }, { merge: true });
+
+      set(state => {
         const newOnlineUsers = new Set(state.onlineUsers);
         if (isOnline) {
           newOnlineUsers.add(memberId);
         } else {
           newOnlineUsers.delete(memberId);
         }
-
-        localStorage.setItem('members', JSON.stringify(updatedMembers));
-        return {
-          members: updatedMembers,
-          onlineUsers: newOnlineUsers
-        };
-      });
-
-      socketService.emit(SOCKET_EVENTS.MEMBER_STATUS, {
-        memberId,
-        status: isOnline ? 'online' : 'offline'
+        return { onlineUsers: newOnlineUsers };
       });
     } catch (error) {
-      console.error('Error updating member status:', error);
+      console.error('Error updating member status:', error.message);
+      // Don't throw the error to prevent UI disruption
     }
   },
 
-  banMember: (memberId, reason) => {
-    set(state => {
-      const updatedMembers = state.members.map(member =>
-        member.id === memberId
-          ? {
-              ...member,
-              banned: true,
-              banReason: reason,
-              banDate: new Date().toISOString()
-            }
-          : member
-      );
+  banMember: async (memberId, reason) => {
+    if (!memberId) return;
 
-      localStorage.setItem('members', JSON.stringify(updatedMembers));
-      return { members: updatedMembers };
-    });
+    try {
+      const memberRef = doc(db, 'members', memberId);
+      await updateDoc(memberRef, {
+        banned: true,
+        banReason: reason,
+        banDate: serverTimestamp()
+      });
+
+      // Update local state
+      set(state => ({
+        members: state.members.map(member =>
+          member.id === memberId
+            ? { ...member, banned: true, banReason: reason, banDate: new Date().toISOString() }
+            : member
+        )
+      }));
+    } catch (error) {
+      console.error('Error banning member:', error.message);
+      throw error;
+    }
   },
 
-  unbanMember: (memberId) => {
-    set(state => {
-      const updatedMembers = state.members.map(member =>
-        member.id === memberId
-          ? {
-              ...member,
-              banned: false,
-              banReason: null,
-              banDate: null
-            }
-          : member
-      );
+  unbanMember: async (memberId) => {
+    if (!memberId) return;
 
-      localStorage.setItem('members', JSON.stringify(updatedMembers));
-      return { members: updatedMembers };
+    try {
+      const memberRef = doc(db, 'members', memberId);
+      await updateDoc(memberRef, {
+        banned: false,
+        banReason: null,
+        banDate: null
+      });
+
+      // Update local state
+      set(state => ({
+        members: state.members.map(member =>
+          member.id === memberId
+            ? { ...member, banned: false, banReason: null, banDate: null }
+            : member
+        )
+      }));
+    } catch (error) {
+      console.error('Error unbanning member:', error.message);
+      throw error;
+    }
+  },
+
+  initializeRealtime: () => {
+    // Listen for online status changes
+    const statusQuery = query(
+      collection(db, 'memberStatus'),
+      where('isOnline', '==', true)
+    );
+
+    const unsubscribe = onSnapshot(statusQuery, (snapshot) => {
+      const onlineUsers = new Set();
+      snapshot.forEach((doc) => {
+        onlineUsers.add(doc.id);
+      });
+      set({ onlineUsers });
+    }, (error) => {
+      console.error('Error in status listener:', error);
     });
+
+    return unsubscribe;
   }
 }));
 
