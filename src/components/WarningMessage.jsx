@@ -7,7 +7,7 @@ export default function WarningMessage() {
       <div className="flex items-start gap-4">
         <ExclamationTriangleIcon className="h-6 w-6 text-yellow-500 flex-shrink-0 mt-1" />
         <div className="space-y-2">
-          <h3 className="text-lg font-semibold text-yellow-500">Important Information</h3>
+          <h3 className="text-lg font-semibold text-yellow-500">Warning</h3>
           <ul className="space-y-2 text-gray-300">
             <li>• Disable cloud save and remote play in the steam settings</li>
             <li>• If the game closes or you get disconnected, enter offline mode on Steam or use Big Picture mode</li>

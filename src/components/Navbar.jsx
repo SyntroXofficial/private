@@ -2,7 +2,6 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { UserCircleIcon } from '@heroicons/react/24/outline';
 
 export default function Navbar() {
   const location = useLocation();
@@ -37,15 +36,14 @@ export default function Navbar() {
               <Link to="/methods" className={`nav-link ${isActive('/methods')}`}>Methods</Link>
               <Link to="/other-services" className={`nav-link ${isActive('/other-services')}`}>Other Services</Link>
               <Link to="/dashboard" className={`nav-link ${isActive('/dashboard')}`}>Dashboard</Link>
-              <div className="flex items-center gap-2">
-                <Link to="/profile" className="flex items-center gap-2">
-                  {user?.profilePic ? (
-                    <img src={user.profilePic} alt={user.username} className="w-8 h-8 rounded-full" />
-                  ) : (
-                    <UserCircleIcon className="w-8 h-8 text-gray-400" />
-                  )}
-                  <span className="text-gray-300">{user?.username}</span>
-                </Link>
+              <div className="flex items-center gap-4">
+                {user?.avatar ? (
+                  <img src={user.avatar} alt={user.username} className="w-8 h-8 rounded-full" />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-red-500/10 flex items-center justify-center">
+                    <span className="text-red-500">{user?.username?.[0]}</span>
+                  </div>
+                )}
                 <button onClick={handleLogout} className="nav-link">Logout</button>
               </div>
             </>
