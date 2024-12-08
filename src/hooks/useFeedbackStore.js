@@ -1,28 +1,53 @@
-import { useState, useEffect } from 'react';
-import { feedbackStore } from '../store/feedbackStore';
+import { create } from 'zustand';
 
-export function useFeedbackStore() {
-  const [feedbacks, setFeedbacks] = useState(() => feedbackStore.getFeedbacks());
+export const useFeedbackStore = create((set) => ({
+  feedbacks: [],
+  isLoading: false,
+  error: null,
 
-  useEffect(() => {
-    const unsubscribe = feedbackStore.subscribe(updatedFeedbacks => {
-      setFeedbacks(updatedFeedbacks);
+  fetchFeedbacks: () => {
+    // Simulate fetching feedbacks
+    const storedFeedbacks = JSON.parse(localStorage.getItem('feedbacks') || '[]');
+    set({ feedbacks: storedFeedbacks });
+  },
+
+  addFeedback: (feedback) => {
+    const newFeedback = {
+      id: Date.now().toString(),
+      ...feedback,
+      reactions: {
+        '👍': 0, '❤️': 0, '🎮': 0, '🌟': 0,
+        '🔥': 0, '👏': 0, '🎯': 0, '💪': 0
+      },
+      timestamp: new Date().toISOString()
+    };
+
+    set(state => {
+      const updatedFeedbacks = [newFeedback, ...state.feedbacks];
+      localStorage.setItem('feedbacks', JSON.stringify(updatedFeedbacks));
+      return { feedbacks: updatedFeedbacks };
     });
 
-    return () => unsubscribe();
-  }, []);
+    return newFeedback;
+  },
 
-  const addFeedback = (feedback) => {
-    return feedbackStore.addFeedback(feedback);
-  };
+  addReaction: (feedbackId, reaction) => {
+    set(state => {
+      const updatedFeedbacks = state.feedbacks.map(feedback => {
+        if (feedback.id === feedbackId) {
+          return {
+            ...feedback,
+            reactions: {
+              ...feedback.reactions,
+              [reaction]: (feedback.reactions[reaction] || 0) + 1
+            }
+          };
+        }
+        return feedback;
+      });
 
-  const addReaction = (feedbackId, reaction) => {
-    feedbackStore.addReaction(feedbackId, reaction);
-  };
-
-  return {
-    feedbacks,
-    addFeedback,
-    addReaction
-  };
-}
+      localStorage.setItem('feedbacks', JSON.stringify(updatedFeedbacks));
+      return { feedbacks: updatedFeedbacks };
+    });
+  }
+}));

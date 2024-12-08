@@ -1,75 +1,98 @@
-// Feedback Store with localStorage persistence and event system
-const STORAGE_KEY = 'prime_nexo_feedback';
+import { create } from 'zustand';
+import { supabase } from '../lib/supabase';
 
-class FeedbackStore {
-  constructor() {
-    this.feedbacks = this.loadFeedbacks();
-    this.listeners = new Set();
-  }
+const useFeedbackStore = create((set, get) => ({
+    feedbacks: [],
+    isLoading: false,
+    error: null,
 
-  loadFeedbacks() {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      return stored ? JSON.parse(stored) : [];
-    } catch (error) {
-      console.error('Error loading feedbacks:', error);
-      return [];
+    fetchFeedbacks: async () => {
+        set({ isLoading: true });
+        try {
+            const { data, error } = await supabase
+                .from('feedbacks')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (error) throw error;
+            set({ feedbacks: data, isLoading: false });
+
+            // Subscribe to real-time changes after initial fetch
+            supabase
+                .channel('public:feedbacks')
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'feedbacks' }, payload => {
+                    console.log('Change received!', payload);
+                    if (payload.eventType === 'INSERT') {
+                        set(state => ({ feedbacks: [payload.new, ...state.feedbacks] }));
+                    } else if (payload.eventType === 'UPDATE') {
+                        set(state => ({
+                            feedbacks: state.feedbacks.map(f =>
+                                f.id === payload.old.id ? payload.new : f
+                            )
+                        }));
+                    }
+
+                    // Add logic for DELETE if needed
+                })
+                .subscribe()
+
+        } catch (error) {
+            set({ error: error.message, isLoading: false });
+        }
+    },
+
+    addFeedback: async (feedback) => {
+        try {
+            const newFeedback = {
+                ...feedback,
+                reactions: {
+                    '👍': 0, '❤️': 0, '🎮': 0, '🌟': 0,
+                    '🔥': 0, '👏': 0, '🎯': 0, '💪': 0
+                },
+                created_at: new Date().toISOString()
+            };
+
+            const { data, error } = await supabase
+                .from('feedbacks')
+                .insert([newFeedback])
+                .select()
+                .single();
+
+            if (error) throw error;
+
+            // No need to update state here, real-time subscription will handle it
+            return data;
+        } catch (error) {
+            set({ error: error.message });
+            throw error;
+        }
+    },
+
+    addReaction: async (feedbackId, reaction) => {
+        try {
+            const feedback = get().feedbacks.find(f => f.id === feedbackId);
+            if (!feedback) return;
+
+            const updatedReactions = {
+                ...feedback.reactions,
+                [reaction]: (feedback.reactions[reaction] || 0) + 1
+            };
+
+            const { data, error } = await supabase
+                .from('feedbacks')
+                .update({ reactions: updatedReactions })
+                .eq('id', feedbackId)
+                .select()
+                .single();
+
+            if (error) throw error;
+
+            // No need to update state here, real-time subscription will handle it
+
+        } catch (error) {
+            set({ error: error.message });
+        }
     }
-  }
+}));
 
-  saveFeedbacks() {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(this.feedbacks));
-      this.notifyListeners();
-    } catch (error) {
-      console.error('Error saving feedbacks:', error);
-    }
-  }
-
-  subscribe(listener) {
-    this.listeners.add(listener);
-    return () => this.listeners.delete(listener);
-  }
-
-  notifyListeners() {
-    for (const listener of this.listeners) {
-      listener([...this.feedbacks]);
-    }
-  }
-
-  addFeedback(feedback) {
-    const newFeedback = {
-      id: Date.now().toString(),
-      timestamp: new Date().toISOString(),
-      reactions: {
-        '👍': 0,
-        '❤️': 0,
-        '🎮': 0,
-        '🌟': 0,
-        '🔥': 0,
-        '👏': 0,
-        '🎯': 0,
-        '💪': 0
-      },
-      ...feedback
-    };
-    
-    this.feedbacks = [newFeedback, ...this.feedbacks];
-    this.saveFeedbacks();
-    return newFeedback;
-  }
-
-  getFeedbacks() {
-    return [...this.feedbacks];
-  }
-
-  addReaction(feedbackId, reaction) {
-    const feedback = this.feedbacks.find(f => f.id === feedbackId);
-    if (feedback && feedback.reactions[reaction] !== undefined) {
-      feedback.reactions[reaction]++;
-      this.saveFeedbacks();
-    }
-  }
-}
-
-export const feedbackStore = new FeedbackStore();
+export default useFeedbackStore;

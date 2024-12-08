@@ -18,30 +18,33 @@ export default function FeedbackForm() {
   const { user } = useAuth();
   const { addFeedback } = useFeedbackStore();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (!feedbackType || !message) {
       return;
     }
 
-    const newFeedback = {
-      type: feedbackType,
-      accountName: accountName.trim(),
-      message: message.trim(),
-      username: user?.username || 'Anonymous'
-    };
+    try {
+      await addFeedback({
+        type: feedbackType,
+        accountName: accountName.trim(),
+        message: message.trim(),
+        username: user?.username || 'Anonymous'
+      });
 
-    addFeedback(newFeedback);
-    setSubmitted(true);
-    
-    // Reset form after submission
-    setTimeout(() => {
-      setFeedbackType('');
-      setAccountName('');
-      setMessage('');
-      setSubmitted(false);
-    }, 3000);
+      setSubmitted(true);
+      
+      // Reset form after submission
+      setTimeout(() => {
+        setFeedbackType('');
+        setAccountName('');
+        setMessage('');
+        setSubmitted(false);
+      }, 3000);
+    } catch (error) {
+      console.error('Error submitting feedback:', error);
+    }
   };
 
   return (

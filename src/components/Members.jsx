@@ -1,37 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { UserIcon, StarIcon, ClockIcon } from '@heroicons/react/24/outline';
+import useUserStore from '../store/userStore';
 
 export default function Members() {
-  const [members, setMembers] = useState([]);
+  const { users, onlineUsers, fetchUsers } = useUserStore();
 
   useEffect(() => {
-    // Simulated real-time data fetch
-    const fetchMembers = () => {
-      const currentMembers = [
-        { 
-          username: 'Andres_rios', 
-          role: 'Owner', 
-          joinDate: '2024-07-12', 
-          lastActive: 'An week ago',
-          discordId: '123456789012345678'
-        },
-        { 
-          username: 'MarcSpector', 
-          role: 'Owner', 
-          joinDate: '2024-07-12', 
-          lastActive: 'An week ago',
-          discordId: '876543210987654321'
-        },
-      ];
-      setMembers(currentMembers);
-    };
-
-    fetchMembers();
-    const interval = setInterval(fetchMembers, 60000); // Update every minute
-
-    return () => clearInterval(interval);
-  }, []);
+    fetchUsers();
+  }, [fetchUsers]);
 
   return (
     <div className="min-h-screen pt-24">
@@ -47,23 +24,35 @@ export default function Members() {
           </p>
           <div className="mt-4 inline-block px-4 py-2 bg-red-500/20 border border-red-500/30 rounded-lg">
             <span className="text-white font-bold">
-              {members.length} Active Members
+              {users.length} Members • {onlineUsers.size} Online
             </span>
           </div>
         </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {members.map((member, index) => (
+          {users.map((member) => (
             <motion.div
-              key={member.username}
+              key={member.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
               className="glass-effect rounded-xl p-6"
             >
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center">
-                  <UserIcon className="w-6 h-6 text-red-500" />
+                <div className="relative">
+                  {member.profilePic ? (
+                    <img
+                      src={member.profilePic}
+                      alt={member.username}
+                      className="w-12 h-12 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center">
+                      <UserIcon className="w-6 h-6 text-red-500" />
+                    </div>
+                  )}
+                  <span className={`absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-black ${
+                    onlineUsers.has(member.id) ? 'bg-green-500' : 'bg-gray-500'
+                  }`} />
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2">

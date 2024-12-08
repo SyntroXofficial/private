@@ -4,8 +4,15 @@ import FeedbackForm from './feedback/FeedbackForm';
 import FeedbackHeader from './feedback/FeedbackHeader';
 import FeedbackWarning from './feedback/FeedbackWarning';
 import FeedbackList from './feedback/FeedbackList';
+import { useFeedbackStore } from '../hooks/useFeedbackStore';
 
 export default function Feedback() {
+  const { fetchFeedbacks } = useFeedbackStore();
+
+  React.useEffect(() => {
+    fetchFeedbacks();
+  }, [fetchFeedbacks]);
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
