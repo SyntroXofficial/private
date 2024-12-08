@@ -9,38 +9,48 @@ export default function Members() {
   const { user } = useAuth();
 
   useEffect(() => {
-    // Fetch initial data
-    fetchMembers();
+    const fetchData = async () => {
+      try {
+        await fetchMembers();
+      } catch (error) {
+        console.error('Error fetching members:', error);
+      }
+    };
 
-    // Initialize real-time subscriptions
+    fetchData();
     const cleanup = initializeRealtime();
 
     // Update user's online status
-    if (user) {
+    if (user?.id) {
       updateMemberStatus(user.id, true);
-      
-      // Update status when window loses/gains focus
-      const handleVisibilityChange = () => {
-        updateMemberStatus(user.id, !document.hidden);
-      };
-      document.addEventListener('visibilitychange', handleVisibilityChange);
 
-      // Update status before unloading
-      const handleBeforeUnload = () => {
-        updateMemberStatus(user.id, false);
+      const handleVisibilityChange = () => {
+        if (user?.id) {
+          updateMemberStatus(user.id, !document.hidden);
+        }
       };
+
+      const handleBeforeUnload = () => {
+        if (user?.id) {
+          updateMemberStatus(user.id, false);
+        }
+      };
+
+      document.addEventListener('visibilitychange', handleVisibilityChange);
       window.addEventListener('beforeunload', handleBeforeUnload);
 
       return () => {
         cleanup();
-        updateMemberStatus(user.id, false);
+        if (user?.id) {
+          updateMemberStatus(user.id, false);
+        }
         document.removeEventListener('visibilitychange', handleVisibilityChange);
         window.removeEventListener('beforeunload', handleBeforeUnload);
       };
     }
 
     return cleanup;
-  }, [user]);
+  }, [user?.id]);
 
   return (
     <div className="min-h-screen pt-24">
@@ -106,7 +116,7 @@ export default function Members() {
                     </span>
                     <span className="text-gray-400 flex items-center gap-1">
                       <ClockIcon className="w-4 h-4" />
-                      {member.lastActive}
+                      {onlineUsers.has(member.id) ? 'Now' : member.lastActive || 'Offline'}
                     </span>
                   </div>
                   <div className="mt-2 text-sm text-gray-400">

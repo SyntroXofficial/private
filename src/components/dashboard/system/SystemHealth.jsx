@@ -1,69 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Line } from 'react-chartjs-2';
 import { useServerMetrics } from '../../../hooks/useServerMetrics';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend
-} from 'chart.js';
-
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend
-);
-
-const chartOptions = {
-  responsive: true,
-  maintainAspectRatio: false,
-  animation: {
-    duration: 500
-  },
-  plugins: {
-    legend: {
-      display: false
-    },
-    tooltip: {
-      mode: 'index',
-      intersect: false,
-      backgroundColor: 'rgba(0, 0, 0, 0.8)',
-      titleColor: '#fff',
-      bodyColor: '#fff',
-      borderColor: '#374151',
-      borderWidth: 1
-    }
-  },
-  scales: {
-    y: {
-      beginAtZero: true,
-      grid: {
-        color: 'rgba(255, 255, 255, 0.1)'
-      },
-      ticks: {
-        color: 'rgba(255, 255, 255, 0.7)',
-        callback: value => `${value}%`
-      }
-    },
-    x: {
-      grid: {
-        color: 'rgba(255, 255, 255, 0.1)'
-      },
-      ticks: {
-        color: 'rgba(255, 255, 255, 0.7)'
-      }
-    }
-  }
-};
 
 export default function SystemHealth() {
   const metrics = useServerMetrics();
@@ -80,26 +17,6 @@ export default function SystemHealth() {
     const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
-  };
-
-  const chartData = {
-    labels: Array(10).fill('').map((_, i) => `${i + 1}m ago`),
-    datasets: [
-      {
-        label: 'CPU Usage',
-        data: Array(10).fill(metrics.cpu),
-        borderColor: 'rgb(59, 130, 246)',
-        backgroundColor: 'rgba(59, 130, 246, 0.5)',
-        tension: 0.4
-      },
-      {
-        label: 'Memory Usage',
-        data: Array(10).fill(metrics.memory),
-        borderColor: 'rgb(16, 185, 129)',
-        backgroundColor: 'rgba(16, 185, 129, 0.5)',
-        tension: 0.4
-      }
-    ]
   };
 
   const systemMetrics = [
@@ -129,7 +46,7 @@ export default function SystemHealth() {
     <div className="glass-effect rounded-xl p-6">
       <h2 className="text-xl font-bold text-white mb-6">System Health</h2>
       
-      <div className="grid grid-cols-2 gap-4 mb-6">
+      <div className="grid grid-cols-2 gap-4">
         {systemMetrics.map((metric, index) => (
           <motion.div
             key={metric.label}
@@ -144,10 +61,6 @@ export default function SystemHealth() {
             </div>
           </motion.div>
         ))}
-      </div>
-      
-      <div className="h-48">
-        <Line options={chartOptions} data={chartData} />
       </div>
 
       <div className="mt-4 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
