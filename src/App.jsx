@@ -3,6 +3,9 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { useAuth } from './context/AuthContext';
 import { useOnlineStatus } from './hooks/useOnlineStatus';
+import useServicesStore from './store/servicesStore';
+import useFeedbackStore from './store/feedbackStore';
+import useMemberStore from './store/memberStore';
 import PrivateRoute from './components/auth/PrivateRoute';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
@@ -17,20 +20,28 @@ import Feedback from './components/Feedback';
 import AuthPage from './components/auth/AuthPage';
 import UserProfile from './components/UserProfile';
 import Dashboard from './components/Dashboard';
-import useFeedbackStore from './store/feedbackStore';
 import './styles/globals.css';
 
 function AppContent() {
   const { user } = useAuth();
+  const initializeServices = useServicesStore(state => state.initialize);
   const initializeFeedbacks = useFeedbackStore(state => state.initialize);
+  const initializeMembers = useMemberStore(state => state.initialize);
 
   // Handle online status
   useOnlineStatus(user?.id);
 
-  // Initialize real-time feedbacks
+  // Initialize Firebase listeners
   useEffect(() => {
-    const unsubscribe = initializeFeedbacks();
-    return () => unsubscribe();
+    const unsubscribeServices = initializeServices();
+    const unsubscribeFeedbacks = initializeFeedbacks();
+    const unsubscribeMembers = initializeMembers();
+
+    return () => {
+      unsubscribeServices();
+      unsubscribeFeedbacks();
+      unsubscribeMembers();
+    };
   }, []);
 
   return (
