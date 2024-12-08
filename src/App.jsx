@@ -13,7 +13,8 @@ import Members from './components/Members';
 import Feedback from './components/Feedback';
 import AuthPage from './components/auth/AuthPage';
 import AuthCallback from './components/auth/AuthCallback';
-import Dashboard from './components/Dashboard';
+import Dashboard from './components/dashboard/Dashboard';
+import Profile from './components/profile/Profile';
 import PrivateRoute from './components/auth/PrivateRoute';
 
 function App() {
@@ -36,6 +37,7 @@ function App() {
               <Route path="/members" element={<Members />} />
               <Route path="/feedback" element={<Feedback />} />
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/profile" element={<Profile />} />
             </Route>
           </Routes>
         </div>

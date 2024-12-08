@@ -6,7 +6,7 @@ export const getDiscordToken = async (code) => {
     client_secret: import.meta.env.VITE_DISCORD_CLIENT_SECRET,
     grant_type: 'authorization_code',
     code: code,
-    redirect_uri: `${window.location.origin}/auth/callback`,
+    redirect_uri: 'https://warm-sunburst-18c65c.netlify.app/auth/callback',
     scope: 'identify email'
   });
 
