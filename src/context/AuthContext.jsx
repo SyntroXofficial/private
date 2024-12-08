@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { getDiscordToken, getDiscordUser } from '../services/discord/auth';
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../services/firebase';
+import { db, COLLECTIONS } from '../services/firebase';
 
 const AuthContext = createContext(null);
 
@@ -36,7 +36,7 @@ export const AuthProvider = ({ children }) => {
       const discordUser = await getDiscordUser(tokenData.access_token);
       
       // Create or update user document in Firestore
-      const userRef = doc(db, 'users', discordUser.id);
+      const userRef = doc(db, COLLECTIONS.USERS, discordUser.id);
       const userSnap = await getDoc(userRef);
       
       const userData = {
@@ -49,11 +49,23 @@ export const AuthProvider = ({ children }) => {
       };
 
       if (!userSnap.exists()) {
+        // New user - add additional fields
         userData.createdAt = serverTimestamp();
         userData.role = 'Member';
+        userData.joinDate = new Date().toISOString();
+        userData.isActive = true;
+        userData.banned = false;
       }
 
+      // Save user data to Firestore
       await setDoc(userRef, userData, { merge: true });
+
+      // Update online status
+      const statusRef = doc(db, COLLECTIONS.ONLINE_STATUS, discordUser.id);
+      await setDoc(statusRef, {
+        isOnline: true,
+        lastSeen: serverTimestamp()
+      });
 
       // Update local state
       setUser(userData);
@@ -68,14 +80,30 @@ export const AuthProvider = ({ children }) => {
       return { success: true };
     } catch (error) {
       console.error('Login error:', error);
-      return { success: false, error: error.message };
+      return { 
+        success: false, 
+        error: error.message || 'Failed to authenticate with Discord'
+      };
     }
   };
 
-  const logout = () => {
-    setUser(null);
-    setIsAuthenticated(false);
-    localStorage.removeItem('prime_nexo_auth');
+  const logout = async () => {
+    try {
+      if (user?.discordId) {
+        // Update online status
+        const statusRef = doc(db, COLLECTIONS.ONLINE_STATUS, user.discordId);
+        await setDoc(statusRef, {
+          isOnline: false,
+          lastSeen: serverTimestamp()
+        });
+      }
+
+      setUser(null);
+      setIsAuthenticated(false);
+      localStorage.removeItem('prime_nexo_auth');
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
   };
 
   return (
