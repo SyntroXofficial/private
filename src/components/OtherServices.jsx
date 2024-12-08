@@ -2,10 +2,10 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { CloudArrowUpIcon, FilmIcon, UserGroupIcon, ChatBubbleBottomCenterTextIcon } from '@heroicons/react/24/outline';
-import { useFeedbackStore } from '../hooks/useFeedbackStore';
+import useFeedbackStore from '../store/feedbackStore';
 
 export default function OtherServices() {
-  const { feedbacks } = useFeedbackStore();
+  const feedbacks = useFeedbackStore(state => state.feedbacks);
 
   const services = [
     {
@@ -64,7 +64,26 @@ export default function OtherServices() {
               transition={{ delay: index * 0.1 }}
             >
               <Link to={service.path}>
-                <ServiceCard service={service} />
+                <div className="glass-effect cyber-border p-8 rounded-xl h-full hover:scale-[1.02] transition-transform duration-300">
+                  <service.icon className="h-16 w-16 text-red-500 mb-6" />
+                  <h2 className="text-2xl font-bold text-red-400 mb-4">{service.title}</h2>
+                  <p className="text-gray-400 mb-4">{service.description}</p>
+                  {service.stats && (
+                    <div className="mt-4 px-3 py-1.5 bg-red-500/20 text-red-400 rounded-full inline-block">
+                      {service.stats}
+                    </div>
+                  )}
+                  {service.members && (
+                    <div className="mt-4 space-y-2">
+                      {service.members.map((member, idx) => (
+                        <div key={idx} className="text-gray-300 flex items-center gap-2">
+                          <span className="h-2 w-2 rounded-full bg-red-500"></span>
+                          {member}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </Link>
             </motion.div>
           ))}
@@ -73,26 +92,3 @@ export default function OtherServices() {
     </motion.div>
   );
 }
-
-const ServiceCard = ({ service }) => (
-  <div className="glass-effect cyber-border p-8 rounded-xl h-full hover:scale-[1.02] transition-transform duration-300">
-    <service.icon className="h-16 w-16 text-red-500 mb-6" />
-    <h2 className="text-2xl font-bold text-red-400 mb-4">{service.title}</h2>
-    <p className="text-gray-400 mb-4">{service.description}</p>
-    {service.stats && (
-      <div className="mt-4 px-3 py-1.5 bg-red-500/20 text-red-400 rounded-full inline-block">
-        {service.stats}
-      </div>
-    )}
-    {service.members && (
-      <div className="mt-4 space-y-2">
-        {service.members.map((member, idx) => (
-          <div key={idx} className="text-gray-300 flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-red-500"></span>
-            {member}
-          </div>
-        ))}
-      </div>
-    )}
-  </div>
-);

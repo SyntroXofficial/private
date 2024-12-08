@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ExclamationTriangleIcon, LightBulbIcon, ChatBubbleLeftIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../../context/AuthContext';
-import { useFeedbackStore } from '../../store/feedbackStore';
+import useFeedbackStore from '../../store/feedbackStore';
 
 const FEEDBACK_TYPES = [
   { id: 'issue', label: 'Report Issue', icon: ExclamationTriangleIcon, color: 'text-yellow-500' },
@@ -15,17 +15,19 @@ export default function FeedbackForm() {
   const [accountName, setAccountName] = useState('');
   const [message, setMessage] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { user } = useAuth();
   const { addFeedback } = useFeedbackStore();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!feedbackType || !message) {
+    if (!feedbackType || !message || isSubmitting) {
       return;
     }
 
     try {
+      setIsSubmitting(true);
       await addFeedback({
         type: feedbackType,
         accountName: accountName.trim(),
@@ -35,16 +37,17 @@ export default function FeedbackForm() {
       });
 
       setSubmitted(true);
+      setFeedbackType('');
+      setAccountName('');
+      setMessage('');
       
-      // Reset form after submission
       setTimeout(() => {
-        setFeedbackType('');
-        setAccountName('');
-        setMessage('');
         setSubmitted(false);
       }, 3000);
     } catch (error) {
       console.error('Error submitting feedback:', error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -113,10 +116,10 @@ export default function FeedbackForm() {
           type="submit"
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          disabled={!feedbackType || !message}
+          disabled={!feedbackType || !message || isSubmitting}
           className="w-full py-3 bg-red-600 hover:bg-red-700 rounded-lg text-white transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Submit Feedback
+          {isSubmitting ? 'Submitting...' : 'Submit Feedback'}
         </motion.button>
 
         {submitted && (

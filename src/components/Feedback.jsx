@@ -4,19 +4,22 @@ import FeedbackForm from './feedback/FeedbackForm';
 import FeedbackHeader from './feedback/FeedbackHeader';
 import FeedbackWarning from './feedback/FeedbackWarning';
 import FeedbackList from './feedback/FeedbackList';
-import { useFeedbackStore } from '../store/feedbackStore';
+import useFeedbackStore from '../store/feedbackStore';
 
 export default function Feedback() {
   const { fetchFeedbacks, initializeRealtime } = useFeedbackStore();
 
   useEffect(() => {
-    // Fetch initial data
+    // Initial fetch
     fetchFeedbacks();
 
-    // Initialize real-time subscriptions
+    // Set up real-time listener
     const cleanup = initializeRealtime();
 
-    return cleanup;
+    // Cleanup on unmount
+    return () => {
+      if (cleanup) cleanup();
+    };
   }, [fetchFeedbacks, initializeRealtime]);
 
   return (

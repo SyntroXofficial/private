@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { UserCircleIcon } from '@heroicons/react/24/outline';
-import { useFeedbackStore } from '../../store/feedbackStore';
+import useFeedbackStore from '../../store/feedbackStore';
 
 const REACTIONS = [
   { emoji: '👍', tooltip: 'Like' },
@@ -38,7 +38,9 @@ export default function FeedbackList() {
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
                     <span className="font-semibold text-white">{feedback.username}</span>
-                    <span className="text-gray-300">{new Date(feedback.timestamp).toLocaleString()}</span>
+                    <span className="text-gray-300">
+                      {new Date(feedback.timestamp).toLocaleString()}
+                    </span>
                     <span className="px-2 py-1 rounded-full text-xs bg-red-500/20 text-red-400 border border-red-500/30">
                       {feedback.type.toUpperCase()}
                     </span>
@@ -57,8 +59,12 @@ export default function FeedbackList() {
                         className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/30 hover:bg-black/50 transition-colors group relative"
                         title={tooltip}
                       >
-                        <span className="group-hover:scale-110 transition-transform">{emoji}</span>
-                        <span className="text-sm text-gray-400">{feedback.reactions[emoji] || 0}</span>
+                        <span className="group-hover:scale-110 transition-transform">
+                          {emoji}
+                        </span>
+                        <span className="text-sm text-gray-400">
+                          {feedback.reactions?.[emoji] || 0}
+                        </span>
                         <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 px-2 py-1 bg-black/80 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity">
                           {tooltip}
                         </span>
