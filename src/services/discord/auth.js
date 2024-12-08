@@ -2,7 +2,7 @@ import { supabase } from '../../lib/supabase';
 
 const DISCORD_API_ENDPOINT = 'https://discord.com/api/v10';
 const CLIENT_ID = '1315323672927666206';
-const REDIRECT_URI = 'https://private-web-xyz.vercel.app/auth/callback';
+const REDIRECT_URI = typeof window !== 'undefined' ? `${window.location.origin}/auth/callback` : '';
 
 export const getDiscordAuthUrl = () => {
   const params = new URLSearchParams({
@@ -15,62 +15,41 @@ export const getDiscordAuthUrl = () => {
   return `${DISCORD_API_ENDPOINT}/oauth2/authorize?${params}`;
 };
 
-export const getDiscordToken = async (code) => {
-  try {
-    const response = await fetch(`${DISCORD_API_ENDPOINT}/oauth2/token`, {
-      method: 'POST',
-      body: new URLSearchParams({
-        client_id: CLIENT_ID,
-        client_secret: process.env.DISCORD_CLIENT_SECRET,
-        grant_type: 'authorization_code',
-        code,
-        redirect_uri: REDIRECT_URI,
-        scope: 'identify email'
-      }),
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
-      }
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error_description || 'Failed to get Discord token');
-    }
-
-    return response.json();
-  } catch (error) {
-    console.error('Discord token error:', error);
-    throw error;
-  }
-};
-
-export const getDiscordUser = async (accessToken) => {
-  try {
-    const response = await fetch(`${DISCORD_API_ENDPOINT}/users/@me`, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`
-      }
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Failed to get Discord user data');
-    }
-
-    return response.json();
-  } catch (error) {
-    console.error('Discord user error:', error);
-    throw error;
-  }
-};
-
 export const handleDiscordAuth = async (code) => {
   try {
-    // Get Discord token
-    const tokenData = await getDiscordToken(code);
-    
+    // Exchange code for token
+    const tokenResponse = await fetch(`${DISCORD_API_ENDPOINT}/oauth2/token`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: new URLSearchParams({
+        client_id: CLIENT_ID,
+        client_secret: import.meta.env.VITE_DISCORD_CLIENT_SECRET,
+        grant_type: 'authorization_code',
+        code,
+        redirect_uri: REDIRECT_URI
+      })
+    });
+
+    if (!tokenResponse.ok) {
+      throw new Error('Failed to get Discord token');
+    }
+
+    const tokenData = await tokenResponse.json();
+
     // Get Discord user data
-    const discordUser = await getDiscordUser(tokenData.access_token);
+    const userResponse = await fetch(`${DISCORD_API_ENDPOINT}/users/@me`, {
+      headers: {
+        Authorization: `Bearer ${tokenData.access_token}`
+      }
+    });
+
+    if (!userResponse.ok) {
+      throw new Error('Failed to get Discord user data');
+    }
+
+    const discordUser = await userResponse.json();
 
     // Check if user exists in Supabase
     const { data: existingUser } = await supabase
@@ -80,20 +59,23 @@ export const handleDiscordAuth = async (code) => {
       .single();
 
     if (existingUser) {
-      // Update existing user's last login
-      await supabase
+      // Update existing user
+      const { data: updatedUser, error: updateError } = await supabase
         .from('users')
         .update({
           last_login: new Date().toISOString(),
           avatar: discordUser.avatar ? `https://cdn.discordapp.com/avatars/${discordUser.id}/${discordUser.avatar}.png` : null
         })
-        .eq('discord_id', discordUser.id);
+        .eq('discord_id', discordUser.id)
+        .select()
+        .single();
 
-      return { user: existingUser, isNewUser: false };
+      if (updateError) throw updateError;
+      return { user: updatedUser, isNewUser: false };
     }
 
     // Create new user
-    const { data: newUser, error } = await supabase
+    const { data: newUser, error: createError } = await supabase
       .from('users')
       .insert({
         username: discordUser.username,
@@ -107,8 +89,7 @@ export const handleDiscordAuth = async (code) => {
       .select()
       .single();
 
-    if (error) throw error;
-
+    if (createError) throw createError;
     return { user: newUser, isNewUser: true };
   } catch (error) {
     console.error('Discord auth error:', error);
