@@ -37,13 +37,16 @@ export default function Navbar() {
               <Link to="/other-services" className={`nav-link ${isActive('/other-services')}`}>Other Services</Link>
               <Link to="/dashboard" className={`nav-link ${isActive('/dashboard')}`}>Dashboard</Link>
               <div className="flex items-center gap-4">
-                {user?.avatar ? (
-                  <img src={user.avatar} alt={user.username} className="w-8 h-8 rounded-full" />
-                ) : (
-                  <div className="w-8 h-8 rounded-full bg-red-500/10 flex items-center justify-center">
-                    <span className="text-red-500">{user?.username?.[0]}</span>
-                  </div>
-                )}
+                <Link to="/profile" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/5 transition-colors">
+                  {user?.avatar ? (
+                    <img src={user.avatar} alt={user.username} className="w-8 h-8 rounded-full" />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-red-500/10 flex items-center justify-center">
+                      <span className="text-red-500">{user?.username?.[0]}</span>
+                    </div>
+                  )}
+                  <span className="text-gray-300 hover:text-white">{user?.username}</span>
+                </Link>
                 <button onClick={handleLogout} className="nav-link">Logout</button>
               </div>
             </>
