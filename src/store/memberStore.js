@@ -1,50 +1,41 @@
 import { create } from 'zustand';
-import { supabase } from '../lib/supabase';
 import { socketService } from '../services/socketService';
+import { SOCKET_EVENTS } from '../services/socket/socketConfig';
 
 const useMemberStore = create((set, get) => ({
-  members: [],
-  onlineUsers: new Set(),
+  members: [
+    {
+      id: '1',
+      username: 'Andres_rios',
+      email: 'andres@example.com',
+      role: 'Owner',
+      discordId: '123456789012345678',
+      joinDate: '2024-01-15',
+      lastActive: 'Now',
+      banned: false
+    },
+    {
+      id: '2',
+      username: 'MarcSpector',
+      email: 'marc@example.com',
+      role: 'Owner',
+      discordId: '987654321098765432',
+      joinDate: '2024-01-15',
+      lastActive: '2h ago',
+      banned: false
+    }
+  ],
+  onlineUsers: new Set(['1', '2']),
   isLoading: false,
   error: null,
 
   initializeRealtime: () => {
-    // Subscribe to real-time database changes
-    const channel = supabase
-      .channel('members')
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'members' },
-        payload => {
-          const { new: newMember, old: oldMember, eventType } = payload;
-          
-          switch (eventType) {
-            case 'INSERT':
-              set(state => ({
-                members: [...state.members, newMember]
-              }));
-              break;
-            case 'UPDATE':
-              set(state => ({
-                members: state.members.map(member =>
-                  member.id === oldMember.id ? newMember : member
-                )
-              }));
-              break;
-            case 'DELETE':
-              set(state => ({
-                members: state.members.filter(member => member.id !== oldMember.id)
-              }));
-              break;
-          }
-        }
-      )
-      .subscribe();
-
-    // Subscribe to online status updates via WebSocket
-    const unsubscribeSocket = socketService.subscribe('memberStatus', ({ userId, status }) => {
+    socketService.initialize();
+    
+    const presenceUnsubscribe = socketService.subscribe(SOCKET_EVENTS.PRESENCE, ({ userId, status }) => {
       set(state => {
         const newOnlineUsers = new Set(state.onlineUsers);
-        if (status) {
+        if (status === 'online') {
           newOnlineUsers.add(userId);
         } else {
           newOnlineUsers.delete(userId);
@@ -53,95 +44,82 @@ const useMemberStore = create((set, get) => ({
       });
     });
 
-    // Return cleanup function that handles both subscriptions
     return () => {
-      channel.unsubscribe();
-      if (unsubscribeSocket) {
-        unsubscribeSocket();
-      }
+      presenceUnsubscribe();
     };
   },
 
-  fetchMembers: async () => {
-    set({ isLoading: true });
-    try {
-      const { data, error } = await supabase
-        .from('members')
-        .select('*')
-        .order('created_at', { ascending: false });
+  fetchMembers: () => {
+    const storedMembers = JSON.parse(localStorage.getItem('members') || '[]');
+    set({ members: storedMembers.length > 0 ? storedMembers : get().members });
+  },
 
-      if (error) throw error;
-      set({ members: data, isLoading: false });
+  updateMemberStatus: (memberId, isOnline) => {
+    try {
+      set(state => {
+        const updatedMembers = state.members.map(member =>
+          member.id === memberId
+            ? { ...member, lastActive: isOnline ? 'Now' : new Date().toISOString() }
+            : member
+        );
+
+        const newOnlineUsers = new Set(state.onlineUsers);
+        if (isOnline) {
+          newOnlineUsers.add(memberId);
+        } else {
+          newOnlineUsers.delete(memberId);
+        }
+
+        localStorage.setItem('members', JSON.stringify(updatedMembers));
+        return {
+          members: updatedMembers,
+          onlineUsers: newOnlineUsers
+        };
+      });
+
+      socketService.emit(SOCKET_EVENTS.MEMBER_STATUS, {
+        memberId,
+        status: isOnline ? 'online' : 'offline'
+      });
     } catch (error) {
-      set({ error: error.message, isLoading: false });
+      console.error('Error updating member status:', error);
     }
   },
 
-  banMember: async (memberId, reason) => {
-    try {
-      const { data, error } = await supabase
-        .from('members')
-        .update({
-          banned: true,
-          banReason: reason,
-          banDate: new Date().toISOString()
-        })
-        .eq('id', memberId)
-        .select()
-        .single();
+  banMember: (memberId, reason) => {
+    set(state => {
+      const updatedMembers = state.members.map(member =>
+        member.id === memberId
+          ? {
+              ...member,
+              banned: true,
+              banReason: reason,
+              banDate: new Date().toISOString()
+            }
+          : member
+      );
 
-      if (error) throw error;
-
-      set(state => ({
-        members: state.members.map(member =>
-          member.id === memberId ? data : member
-        )
-      }));
-
-      // Emit ban event via WebSocket
-      socketService.emit('memberBanned', {
-        memberId,
-        reason,
-        timestamp: new Date().toISOString()
-      });
-
-    } catch (error) {
-      console.error('Error banning member:', error);
-      throw error;
-    }
+      localStorage.setItem('members', JSON.stringify(updatedMembers));
+      return { members: updatedMembers };
+    });
   },
 
-  unbanMember: async (memberId) => {
-    try {
-      const { data, error } = await supabase
-        .from('members')
-        .update({
-          banned: false,
-          banReason: null,
-          banDate: null
-        })
-        .eq('id', memberId)
-        .select()
-        .single();
+  unbanMember: (memberId) => {
+    set(state => {
+      const updatedMembers = state.members.map(member =>
+        member.id === memberId
+          ? {
+              ...member,
+              banned: false,
+              banReason: null,
+              banDate: null
+            }
+          : member
+      );
 
-      if (error) throw error;
-
-      set(state => ({
-        members: state.members.map(member =>
-          member.id === memberId ? data : member
-        )
-      }));
-
-      // Emit unban event via WebSocket
-      socketService.emit('memberUnbanned', {
-        memberId,
-        timestamp: new Date().toISOString()
-      });
-
-    } catch (error) {
-      console.error('Error unbanning member:', error);
-      throw error;
-    }
+      localStorage.setItem('members', JSON.stringify(updatedMembers));
+      return { members: updatedMembers };
+    });
   }
 }));
 

@@ -3,14 +3,14 @@ import { socketService } from '../services/socketService';
 
 export function useServerMetrics() {
   const [metrics, setMetrics] = useState({
-    cpu: 0,
-    memory: 0,
-    disk: 0,
+    cpu: 45,
+    memory: 65,
+    disk: 30,
     network: {
-      in: 0,
-      out: 0
+      in: 1024 * 1024 * 50, // 50MB
+      out: 1024 * 1024 * 30  // 30MB
     },
-    responseTime: 0
+    responseTime: 150
   });
 
   useEffect(() => {
@@ -19,22 +19,22 @@ export function useServerMetrics() {
       setMetrics(data);
     });
 
-    // Initial metrics fetch
-    fetch('https://api.vercel.com/v1/metrics', {
-      headers: {
-        'Authorization': `Bearer ${process.env.VERCEL_TOKEN}`
-      }
-    })
-    .then(res => res.json())
-    .then(data => {
+    // Simulate metrics updates
+    const interval = setInterval(() => {
       setMetrics(prev => ({
         ...prev,
-        ...data
+        cpu: Math.floor(Math.random() * 20) + 35,
+        memory: Math.floor(Math.random() * 15) + 55,
+        responseTime: Math.floor(Math.random() * 100) + 100,
+        network: {
+          in: prev.network.in + Math.floor(Math.random() * 1024 * 1024),
+          out: prev.network.out + Math.floor(Math.random() * 1024 * 1024)
+        }
       }));
-    })
-    .catch(console.error);
+    }, 5000);
 
     return () => {
+      clearInterval(interval);
       if (unsubscribe) {
         unsubscribe();
       }

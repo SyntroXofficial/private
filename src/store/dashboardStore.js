@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { socketService } from '../services/socketService';
-import { supabase } from '../lib/supabase';
+import { SOCKET_EVENTS } from '../services/socket/socketConfig';
 
 const useDashboardStore = create((set, get) => ({
   stats: {
@@ -38,95 +38,55 @@ const useDashboardStore = create((set, get) => ({
 
     try {
       set({ isLoading: true });
+      socketService.initialize();
 
-      // Subscribe to real-time updates
-      socketService.subscribe('dashboardUpdate', (data) => {
+      // Subscribe to Socket.IO real-time updates
+      const dashboardUnsubscribe = socketService.subscribe(SOCKET_EVENTS.DASHBOARD_UPDATE, (data) => {
         set(state => ({
-          ...state,
           stats: { ...state.stats, ...data.stats },
           securityMetrics: { ...state.securityMetrics, ...data.security }
         }));
       });
 
-      socketService.subscribe('securityAlert', (alert) => {
-        set(state => ({
-          activeAlerts: [alert, ...state.activeAlerts].slice(0, 50)
-        }));
-      });
-
-      socketService.subscribe('userActivity', (activity) => {
-        set(state => ({
-          userActivities: [activity, ...state.userActivities].slice(0, 100)
-        }));
-      });
-
-      // Initial data fetch
-      const [statsData, securityData, logsData] = await Promise.all([
-        supabase.from('dashboard_stats').select('*').single(),
-        supabase.from('security_metrics').select('*').single(),
-        supabase.from('system_logs').select('*').order('created_at', { ascending: false }).limit(100)
-      ]);
-
+      // Simulate initial data
       set({
-        stats: statsData.data || get().stats,
-        securityMetrics: securityData.data || get().securityMetrics,
-        systemLogs: logsData.data || [],
+        stats: {
+          totalUsers: 150,
+          activeUsers: 45,
+          bannedUsers: 5,
+          newUsers: 12,
+          serverStatus: 'Online',
+          uptime: '99.9%',
+          responseTime: 150,
+          cpuUsage: 45,
+          memoryUsage: 60,
+          networkTraffic: 1024 * 1024 * 100,
+          errorRate: 0.1
+        },
         isInitialized: true,
         isLoading: false
       });
 
+      // Simulate periodic updates
+      const updateInterval = setInterval(() => {
+        set(state => ({
+          stats: {
+            ...state.stats,
+            cpuUsage: Math.floor(Math.random() * 20) + 35,
+            memoryUsage: Math.floor(Math.random() * 15) + 55,
+            responseTime: Math.floor(Math.random() * 100) + 100
+          }
+        }));
+      }, 5000);
+
+      return () => {
+        clearInterval(updateInterval);
+        dashboardUnsubscribe();
+      };
+
     } catch (error) {
       set({ error: error.message, isLoading: false });
       console.error('Dashboard initialization error:', error);
-    }
-  },
-
-  performAction: async (actionType, data) => {
-    try {
-      socketService.emitDashboardAction(actionType, data);
-
-      // Optimistic update
-      set(state => {
-        switch (actionType) {
-          case 'BAN_USER':
-            return {
-              ...state,
-              stats: {
-                ...state.stats,
-                bannedUsers: state.stats.bannedUsers + 1,
-                activeUsers: state.stats.activeUsers - 1
-              }
-            };
-          case 'UNBAN_USER':
-            return {
-              ...state,
-              stats: {
-                ...state.stats,
-                bannedUsers: state.stats.bannedUsers - 1
-              }
-            };
-          // Add more cases as needed
-          default:
-            return state;
-        }
-      });
-
-      // Log the action
-      const logEntry = {
-        type: actionType,
-        data,
-        timestamp: new Date().toISOString(),
-        status: 'success'
-      };
-
-      await supabase.from('action_logs').insert([logEntry]);
-
-    } catch (error) {
-      set(state => ({
-        ...state,
-        error: `Action failed: ${error.message}`
-      }));
-      throw error;
     }
   },
 
