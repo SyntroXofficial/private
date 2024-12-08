@@ -43,7 +43,7 @@ export default function AuthCallback() {
         navigate('/dashboard');
       } catch (error) {
         console.error('Auth error:', error);
-        toast.error('Failed to authenticate with Discord');
+        toast.error('Failed to authenticate with Discord. Please try again.');
         navigate('/auth');
       }
     };
