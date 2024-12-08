@@ -2,12 +2,12 @@ const DISCORD_API_ENDPOINT = 'https://discord.com/api/v10';
 
 export const getDiscordToken = async (code) => {
   const params = new URLSearchParams({
-    client_id: import.meta.env.VITE_DISCORD_CLIENT_ID,
-    client_secret: import.meta.env.VITE_DISCORD_CLIENT_SECRET,
+    client_id: '1315323672927666206',
+    client_secret: 'YOUR_CLIENT_SECRET',
     grant_type: 'authorization_code',
     code: code,
-    redirect_uri: import.meta.env.VITE_REDIRECT_URI,
-    scope: 'email identify'
+    redirect_uri: 'https://private-web-xyz.vercel.app',
+    scope: 'identify email'
   });
 
   const response = await fetch(`${DISCORD_API_ENDPOINT}/oauth2/token`, {
@@ -19,7 +19,8 @@ export const getDiscordToken = async (code) => {
   });
 
   if (!response.ok) {
-    throw new Error('Failed to get Discord token');
+    const error = await response.json();
+    throw new Error(error.error_description || 'Failed to get Discord token');
   }
 
   return response.json();
@@ -33,7 +34,8 @@ export const getDiscordUser = async (accessToken) => {
   });
 
   if (!response.ok) {
-    throw new Error('Failed to get Discord user');
+    const error = await response.json();
+    throw new Error(error.message || 'Failed to get Discord user data');
   }
 
   return response.json();
