@@ -17,8 +17,16 @@ export const AuthProvider = ({ children }) => {
         if (error) throw error;
         
         if (session?.user) {
-          setUser(session.user);
-          setIsAuthenticated(true);
+          const { data: userData } = await supabase
+            .from('users')
+            .select('*')
+            .eq('discord_id', session.user.user_metadata.discord_id)
+            .single();
+
+          if (userData) {
+            setUser(userData);
+            setIsAuthenticated(true);
+          }
         }
       } catch (error) {
         console.error('Error checking auth session:', error);
@@ -32,8 +40,16 @@ export const AuthProvider = ({ children }) => {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session?.user) {
-        setUser(session.user);
-        setIsAuthenticated(true);
+        const { data: userData } = await supabase
+          .from('users')
+          .select('*')
+          .eq('discord_id', session.user.user_metadata.discord_id)
+          .single();
+
+        if (userData) {
+          setUser(userData);
+          setIsAuthenticated(true);
+        }
       } else {
         setUser(null);
         setIsAuthenticated(false);
@@ -42,9 +58,7 @@ export const AuthProvider = ({ children }) => {
     });
 
     return () => {
-      if (subscription) {
-        subscription.unsubscribe();
-      }
+      subscription?.unsubscribe();
     };
   }, []);
 
