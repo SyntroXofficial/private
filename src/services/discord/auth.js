@@ -3,7 +3,7 @@ const DISCORD_API_ENDPOINT = 'https://discord.com/api/v10';
 export const getDiscordToken = async (code) => {
   const params = new URLSearchParams({
     client_id: '1315323672927666206',
-    client_secret: 'YOUR_CLIENT_SECRET',
+    client_secret: 'jWeD8WOCDRV4cGxfcmdUV-GBanT98uKC',
     grant_type: 'authorization_code',
     code: code,
     redirect_uri: 'https://private-web-xyz.vercel.app',
