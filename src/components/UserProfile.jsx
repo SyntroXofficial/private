@@ -2,47 +2,36 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { UserCircleIcon } from '@heroicons/react/24/outline';
+import useUserStore from '../store/userStore';
 
 export default function UserProfile() {
-  const { user, updateProfilePic } = useAuth();
-  const [profilePicUrl, setProfilePicUrl] = useState(user?.profilePic || '');
-  const [isEditing, setIsEditing] = useState(false);
+  const { user } = useAuth();
+  const updateUserProfile = useUserStore(state => state.updateUserProfile);
+  const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
 
-  const validateImageUrl = async (url) => {
-    return new Promise((resolve) => {
-      const img = new Image();
-      img.onload = () => resolve(true);
-      img.onerror = () => resolve(false);
-      img.src = url;
-    });
-  };
+  const handleFileChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-  const handleUpdateProfilePic = async () => {
-    if (!profilePicUrl.trim()) {
-      setError('Please enter a valid URL');
+    if (!file.type.startsWith('image/')) {
+      setError('Please select an image file');
       return;
     }
 
-    setIsLoading(true);
-    setError('');
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Image size should be less than 5MB');
+      return;
+    }
 
     try {
-      const isValid = await validateImageUrl(profilePicUrl.trim());
-      if (!isValid) {
-        setError('Invalid image URL. Please provide a valid image URL.');
-        setIsLoading(false);
-        return;
-      }
-
-      updateProfilePic(profilePicUrl.trim());
-      setIsEditing(false);
+      setIsUploading(true);
       setError('');
+      await updateUserProfile(user.id, { profilePic: file });
     } catch (err) {
-      setError('Error updating profile picture. Please try again.');
+      setError('Failed to upload image. Please try again.');
     } finally {
-      setIsLoading(false);
+      setIsUploading(false);
     }
   };
 
@@ -56,25 +45,29 @@ export default function UserProfile() {
         >
           <div className="flex items-center gap-6 mb-8">
             <div className="relative group">
-              {profilePicUrl ? (
-                <img
-                  src={profilePicUrl}
-                  alt={user?.username}
-                  className="w-24 h-24 rounded-full object-cover"
-                  onError={() => {
-                    setProfilePicUrl('');
-                    setError('Invalid image URL');
-                  }}
+              <label className="cursor-pointer block">
+                {user?.profilePic ? (
+                  <img
+                    src={user.profilePic}
+                    alt={user.username}
+                    className="w-24 h-24 rounded-full object-cover"
+                  />
+                ) : (
+                  <UserCircleIcon className="w-24 h-24 text-gray-400" />
+                )}
+                <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                  <span className="text-white text-sm">
+                    {isUploading ? 'Uploading...' : 'Change'}
+                  </span>
+                </div>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleFileChange}
+                  disabled={isUploading}
                 />
-              ) : (
-                <UserCircleIcon className="w-24 h-24 text-gray-400" />
-              )}
-              <button 
-                onClick={() => setIsEditing(true)}
-                className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-              >
-                <span className="text-white text-sm">Change</span>
-              </button>
+              </label>
             </div>
             <div>
               <h1 className="text-3xl font-bold text-white mb-2">{user?.username}</h1>
@@ -86,47 +79,16 @@ export default function UserProfile() {
                 }`}>
                   {user?.role || 'Member'}
                 </span>
-                <span className="text-gray-400">Member since {new Date(user?.joinDate).toLocaleDateString()}</span>
+                <span className="text-gray-400">
+                  Member since {new Date(user?.joinDate).toLocaleDateString()}
+                </span>
               </div>
             </div>
           </div>
 
-          {isEditing && (
-            <div className="mb-6 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Profile Picture URL
-                </label>
-                <input
-                  type="text"
-                  value={profilePicUrl}
-                  onChange={(e) => setProfilePicUrl(e.target.value)}
-                  className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-red-500"
-                  placeholder="Enter image URL"
-                  disabled={isLoading}
-                />
-                {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={handleUpdateProfilePic}
-                  disabled={isLoading}
-                  className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isLoading ? 'Updating...' : 'Save'}
-                </button>
-                <button
-                  onClick={() => {
-                    setIsEditing(false);
-                    setError('');
-                    setProfilePicUrl(user?.profilePic || '');
-                  }}
-                  disabled={isLoading}
-                  className="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Cancel
-                </button>
-              </div>
+          {error && (
+            <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400">
+              {error}
             </div>
           )}
 

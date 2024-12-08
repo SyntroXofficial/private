@@ -1,79 +1,79 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { 
-  UserGroupIcon, 
-  ShieldCheckIcon,
-  ServerIcon,
-  ClockIcon,
+  UserGroupIcon,
   UserMinusIcon,
-  UserPlusIcon
+  UserPlusIcon,
+  ServerIcon
 } from '@heroicons/react/24/outline';
-import { useStats } from '../../../hooks/useStats';
 
-export default function DashboardStats() {
-  const { stats } = useStats();
-
+export default function DashboardStats({ stats }) {
   const statItems = [
     {
       icon: UserGroupIcon,
       label: 'Total Users',
       value: stats.totalUsers,
-      change: `${stats.activeUsers} Active`
-    },
-    {
-      icon: ShieldCheckIcon,
-      label: 'Active Accounts',
-      value: stats.activeAccounts,
-      change: 'Current'
-    },
-    {
-      icon: ServerIcon,
-      label: 'Server Status',
-      value: stats.serverStatus,
-      change: stats.uptime
-    },
-    {
-      icon: ClockIcon,
-      label: 'Response Time',
-      value: `${stats.responseTime}ms`,
-      change: 'Average'
+      subValue: `${stats.activeUsers} active`,
+      color: 'text-blue-500',
+      bgColor: 'bg-blue-500/20'
     },
     {
       icon: UserMinusIcon,
       label: 'Banned Users',
       value: stats.bannedUsers,
-      change: 'Total'
+      color: 'text-red-500',
+      bgColor: 'bg-red-500/20'
     },
     {
       icon: UserPlusIcon,
       label: 'New Users',
       value: stats.newUsers,
-      change: 'Last 24h'
+      subValue: 'Last 24h',
+      color: 'text-green-500',
+      bgColor: 'bg-green-500/20'
+    },
+    {
+      icon: ServerIcon,
+      label: 'Server Status',
+      value: stats.serverStatus,
+      subValue: `${stats.uptime} uptime`,
+      color: 'text-purple-500',
+      bgColor: 'bg-purple-500/20'
     }
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {statItems.map((stat, index) => (
-        <motion.div
-          key={index}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: index * 0.1 }}
-          className="glass-effect p-6 rounded-xl"
-        >
-          <div className="flex items-center gap-4">
-            <div className="p-3 bg-red-500/10 rounded-lg">
-              <stat.icon className="h-6 w-6 text-red-500" />
+    <div className="glass-effect rounded-xl p-6">
+      <h2 className="text-xl font-bold text-white mb-6">Dashboard Overview</h2>
+      
+      <div className="grid grid-cols-2 gap-4">
+        {statItems.map((item, index) => (
+          <motion.div
+            key={item.label}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.1 }}
+            className="p-4 rounded-lg bg-black/30"
+          >
+            <div className="flex items-center gap-3 mb-2">
+              <div className={`p-2 rounded-lg ${item.bgColor}`}>
+                <item.icon className={`h-5 w-5 ${item.color}`} />
+              </div>
+              <span className="text-sm text-gray-400">{item.label}</span>
             </div>
-            <div>
-              <p className="text-sm text-gray-400">{stat.label}</p>
-              <p className="text-2xl font-bold text-white">{stat.value}</p>
-              <p className="text-sm text-green-500">{stat.change}</p>
+            
+            <div className="text-xl font-bold text-white">
+              {item.value}
             </div>
-          </div>
-        </motion.div>
-      ))}
+            
+            {item.subValue && (
+              <div className="text-sm text-gray-400 mt-1">
+                {item.subValue}
+              </div>
+            )}
+          </motion.div>
+        ))}
+      </div>
     </div>
   );
 }

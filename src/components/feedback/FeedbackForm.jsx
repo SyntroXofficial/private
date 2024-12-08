@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ExclamationTriangleIcon, LightBulbIcon, ChatBubbleLeftIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../../context/AuthContext';
-import { useFeedbackStore } from '../../hooks/useFeedbackStore';
+import { useFeedbackStore } from '../../store/feedbackStore';
 
 const FEEDBACK_TYPES = [
   { id: 'issue', label: 'Report Issue', icon: ExclamationTriangleIcon, color: 'text-yellow-500' },
@@ -30,7 +30,8 @@ export default function FeedbackForm() {
         type: feedbackType,
         accountName: accountName.trim(),
         message: message.trim(),
-        username: user?.username || 'Anonymous'
+        username: user?.username || 'Anonymous',
+        timestamp: new Date().toISOString()
       });
 
       setSubmitted(true);

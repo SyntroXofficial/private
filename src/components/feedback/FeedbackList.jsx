@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { UserCircleIcon } from '@heroicons/react/24/outline';
-import { useFeedbackStore } from '../../hooks/useFeedbackStore';
+import { useFeedbackStore } from '../../store/feedbackStore';
 
 const REACTIONS = [
   { emoji: '👍', tooltip: 'Like' },
@@ -58,7 +58,7 @@ export default function FeedbackList() {
                         title={tooltip}
                       >
                         <span className="group-hover:scale-110 transition-transform">{emoji}</span>
-                        <span className="text-sm text-gray-400">{feedback.reactions[emoji]}</span>
+                        <span className="text-sm text-gray-400">{feedback.reactions[emoji] || 0}</span>
                         <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 px-2 py-1 bg-black/80 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity">
                           {tooltip}
                         </span>

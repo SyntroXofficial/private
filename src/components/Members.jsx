@@ -1,14 +1,46 @@
 import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { UserIcon, StarIcon, ClockIcon } from '@heroicons/react/24/outline';
-import useUserStore from '../store/userStore';
+import useMemberStore from '../store/memberStore';
+import { useAuth } from '../context/AuthContext';
 
 export default function Members() {
-  const { users, onlineUsers, fetchUsers } = useUserStore();
+  const { members, onlineUsers, fetchMembers, initializeRealtime, updateMemberStatus } = useMemberStore();
+  const { user } = useAuth();
 
   useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
+    // Fetch initial data
+    fetchMembers();
+
+    // Initialize real-time subscriptions
+    const cleanup = initializeRealtime();
+
+    // Update user's online status
+    if (user) {
+      updateMemberStatus(user.id, true);
+      
+      // Update status when window loses/gains focus
+      const handleVisibilityChange = () => {
+        updateMemberStatus(user.id, !document.hidden);
+      };
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+
+      // Update status before unloading
+      const handleBeforeUnload = () => {
+        updateMemberStatus(user.id, false);
+      };
+      window.addEventListener('beforeunload', handleBeforeUnload);
+
+      return () => {
+        cleanup();
+        updateMemberStatus(user.id, false);
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+        window.removeEventListener('beforeunload', handleBeforeUnload);
+      };
+    }
+
+    return cleanup;
+  }, [user]);
 
   return (
     <div className="min-h-screen pt-24">
@@ -24,13 +56,13 @@ export default function Members() {
           </p>
           <div className="mt-4 inline-block px-4 py-2 bg-red-500/20 border border-red-500/30 rounded-lg">
             <span className="text-white font-bold">
-              {users.length} Members • {onlineUsers.size} Online
+              {members.length} Members • {onlineUsers.size} Online
             </span>
           </div>
         </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {users.map((member) => (
+          {members.map((member) => (
             <motion.div
               key={member.id}
               initial={{ opacity: 0, y: 20 }}

@@ -1,17 +1,23 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import FeedbackForm from './feedback/FeedbackForm';
 import FeedbackHeader from './feedback/FeedbackHeader';
 import FeedbackWarning from './feedback/FeedbackWarning';
 import FeedbackList from './feedback/FeedbackList';
-import { useFeedbackStore } from '../hooks/useFeedbackStore';
+import { useFeedbackStore } from '../store/feedbackStore';
 
 export default function Feedback() {
-  const { fetchFeedbacks } = useFeedbackStore();
+  const { fetchFeedbacks, initializeRealtime } = useFeedbackStore();
 
-  React.useEffect(() => {
+  useEffect(() => {
+    // Fetch initial data
     fetchFeedbacks();
-  }, [fetchFeedbacks]);
+
+    // Initialize real-time subscriptions
+    const cleanup = initializeRealtime();
+
+    return cleanup;
+  }, [fetchFeedbacks, initializeRealtime]);
 
   return (
     <motion.div
