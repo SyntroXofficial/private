@@ -1,8 +1,7 @@
 import { supabase } from '../../lib/supabase';
 
 const DISCORD_API_ENDPOINT = 'https://discord.com/api/v10';
-const CLIENT_ID = import.meta.env.VITE_DISCORD_CLIENT_ID;
-const CLIENT_SECRET = import.meta.env.VITE_DISCORD_CLIENT_SECRET;
+const CLIENT_ID = '1315323672927666206';
 const REDIRECT_URI = typeof window !== 'undefined' ? `${window.location.origin}/auth/callback` : '';
 
 export const getDiscordAuthUrl = () => {
@@ -26,7 +25,7 @@ export const handleDiscordAuth = async (code) => {
       },
       body: new URLSearchParams({
         client_id: CLIENT_ID,
-        client_secret: CLIENT_SECRET,
+        client_secret: import.meta.env.VITE_DISCORD_CLIENT_SECRET,
         grant_type: 'authorization_code',
         code,
         redirect_uri: REDIRECT_URI
@@ -34,8 +33,7 @@ export const handleDiscordAuth = async (code) => {
     });
 
     if (!tokenResponse.ok) {
-      const error = await tokenResponse.json();
-      throw new Error(error.error_description || 'Failed to get Discord token');
+      throw new Error('Failed to get Discord token');
     }
 
     const tokenData = await tokenResponse.json();
@@ -48,44 +46,25 @@ export const handleDiscordAuth = async (code) => {
     });
 
     if (!userResponse.ok) {
-      const error = await userResponse.json();
-      throw new Error(error.message || 'Failed to get Discord user data');
+      throw new Error('Failed to get Discord user data');
     }
 
     const discordUser = await userResponse.json();
 
-    // Create Supabase auth session
-    const { data: authData, error: authError } = await supabase.auth.signInWithOAuth({
-      provider: 'discord',
-      options: {
-        queryParams: {
-          access_token: tokenData.access_token,
-          expires_in: tokenData.expires_in
-        }
-      }
-    });
-
-    if (authError) throw authError;
-
-    // Check if user exists in our database
-    const { data: existingUser, error: fetchError } = await supabase
+    // Check if user exists in Supabase
+    const { data: existingUser } = await supabase
       .from('users')
-      .select('*')
+      .select()
       .eq('discord_id', discordUser.id)
       .single();
-
-    if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 means no rows returned
-      throw fetchError;
-    }
 
     if (existingUser) {
       // Update existing user
       const { data: updatedUser, error: updateError } = await supabase
         .from('users')
         .update({
-          username: discordUser.username,
-          avatar: discordUser.avatar ? `https://cdn.discordapp.com/avatars/${discordUser.id}/${discordUser.avatar}.png` : null,
-          last_login: new Date().toISOString()
+          last_login: new Date().toISOString(),
+          avatar: discordUser.avatar ? `https://cdn.discordapp.com/avatars/${discordUser.id}/${discordUser.avatar}.png` : null
         })
         .eq('discord_id', discordUser.id)
         .select()
