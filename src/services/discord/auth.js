@@ -6,7 +6,7 @@ export const getDiscordToken = async (code) => {
     client_secret: import.meta.env.VITE_DISCORD_CLIENT_SECRET,
     grant_type: 'authorization_code',
     code: code,
-    redirect_uri: 'https://private-web-xyz.vercel.app',
+    redirect_uri: import.meta.env.VITE_REDIRECT_URI,
     scope: 'email identify'
   });
 
